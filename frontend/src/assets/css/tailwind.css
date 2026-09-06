@@ -1,0 +1,99 @@
+/*
+ * Tailwind CSS v4 入口
+ *
+ * 引入策略（渐进迁移关键决策）：
+ * 1. 只引入 theme + utilities，不引入 preflight（全局 reset）——
+ *    存量 52 个手写 scoped CSS 页面依赖浏览器默认样式，preflight 会破坏它们
+ * 2. utilities 不放入 cascade layer —— design-system.css 里有未分层的
+ *    `* { margin:0; padding:0; box-sizing:border-box }` 规则，
+ *    CSS 层叠规范中「未分层规则优先于任何 layer 内规则」，
+ *    若工具类放进 layer，margin/padding 类会被这条通配符压制失效；
+ *    保持未分层且后引入，靠选择器特异性（.mb-2 > *）正确生效
+ * 3. @theme 中的令牌值与 design-system.css 完全一致，两套体系共享同一套设计令牌，
+ *    组件无论用 scoped CSS 还是原子类，视觉表现一致
+ */
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css";
+
+@theme {
+  /* ===== 色板：与 design-system.css :root 逐一对应 ===== */
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fdba74;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+
+  --color-violet-50: #f5f3ff;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+
+  --color-amber-50: #fffbeb;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* 页面底色（post 卡片占位渐变用） */
+  --color-page: #f0fdf4;
+
+  /* ===== 阴影：卡片体系 ===== */
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-green: 0 4px 14px rgba(16, 185, 129, 0.25);
+  --shadow-green-lg: 0 8px 25px rgba(16, 185, 129, 0.3);
+
+  /* ===== 字号：对齐设计系统（xs=11px，sm=13px，区别于 Tailwind 默认 12/14px）===== */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+
+  /* ===== 缓动曲线：设计系统动效令牌 ===== */
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ===== 动画：卡片高光扫过效果（替代 scoped @keyframes）===== */
+  --animate-card-shine: card-shine 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes card-shine {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+}

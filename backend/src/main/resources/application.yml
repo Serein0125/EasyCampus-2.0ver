@@ -1,0 +1,86 @@
+# 主配置文件 - 使用环境变量激活不同配置
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: campus-market-backend
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+  # Redis配置 - 禁用Redis，使用内存缓存
+  data:
+    redis:
+      enabled: false
+  # 禁用Redis自动配置（当前使用内存缓存，Redis 可选）
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    defaults:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# 通用配置（所有环境共享）
+mybatis:
+  mapper-locations: classpath:mappers/*.xml
+  type-aliases-package: com.campus.backend.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    default-statement-timeout: 3000
+    default-fetch-size: 100
+
+# Jackson 序列化配置（支持 LocalDateTime 等 Java 8 日期时间类型）
+spring.jackson:
+  serialization:
+    write-dates-as-timestamps: false
+  date-format: yyyy-MM-dd HH:mm:ss
+  time-zone: Asia/Shanghai
+
+server:
+  port: ${PORT:8080}
+
+# Swagger配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+# 应用信息
+app:
+  name: 校园二手交易平台
+  version: 1.0.0
+  description: 大学生课程期末作业项目
+
+# Spring Boot Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus"
+      base-path: "/actuator"
+      path-mapping:
+        health: "health"
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+      probes:
+        enabled: true
+      db:
+        enabled: true
+      diskspace:
+        enabled: true
+      ping:
+        enabled: true

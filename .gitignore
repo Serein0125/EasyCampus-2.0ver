@@ -1,0 +1,96 @@
+# ========================
+# EasyCampus - 易校
+# ========================
+
+# ---- 依赖目录 ----
+node_modules/
+frontend/node_modules/
+
+# ---- 构建输出 ----
+backend/target/
+frontend/dist/
+# 后端 static 目录由前端构建后复制，不提交源码管理
+backend/src/main/resources/static/
+
+# ---- 环境变量文件 ----
+.env
+.env.local
+.env.*.local
+# 生产环境配置含敏感信息，不提交
+frontend/.env.production
+# 开发环境配置可提交（无敏感信息）
+
+# ---- 日志文件 ----
+logs/
+*.log
+npm-debug.log*
+
+# ---- IDE / 编辑器 ----
+.vscode/
+.idea/
+.trae/
+*.swp
+*.swo
+*~
+
+# ---- 操作系统 ----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# ---- 证书 / 密钥 ----
+*.pem
+*.crt
+*.key
+*.jks
+
+# ---- 上传文件目录 ----
+backend/uploads/
+
+# ---- 测试覆盖率 ----
+coverage/
+.nyc_output/
+
+# ---- 临时文件 ----
+tmp/
+temp/
+
+# ---- Java / Maven ----
+*.class
+*.jar
+*.war
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+.factorypath
+
+# ---- 数据库文件 ----
+*.db
+*.sqlite
+*.sqlite3
+
+# ---- 部署 / 平台 ----
+.render/
+.railway/
+
+# ---- 归档目录 ----
+_archive/
+EasyCampus-source.zip
+
+# ---- 个人/私有文档（含内部信息，不对外公开）----
+报告/
+面试准备资料.md
+
+# ---- 项目文档（非运行必需）----
+日志/ 
+压缩包与文档/
+系统设计图表/
+用户账号信息.md
+CHANGELOG.md

@@ -1,0 +1,12 @@
+spring:
+  sql:
+    init:
+      encoding: UTF-8
+      mode: always
+      schema-locations: classpath:schema-mysql.sql
+      data-locations: classpath:data-mysql.sql
+
+logging:
+  level:
+    org.springframework.jdbc.core: DEBUG
+    com.campus.backend: DEBUG

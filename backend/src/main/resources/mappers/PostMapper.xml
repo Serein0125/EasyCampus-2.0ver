@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.backend.mapper.PostMapper">
+
+    <sql id="whereClause">
+        <where>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (title LIKE CONCAT('%', #{query.keyword}, '%')
+                OR content LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
+            <if test="query.boardId != null">
+                AND board_id = #{query.boardId}
+            </if>
+            <if test="query.postType != null and query.postType != ''">
+                AND post_type = #{query.postType}
+            </if>
+            <if test="query.userId != null">
+                AND user_id = #{query.userId}
+            </if>
+            <if test="query.userIds != null and query.userIds.size() > 0">
+                AND user_id IN
+                <foreach collection="query.userIds" item="uid" open="(" separator="," close=")">
+                    #{uid}
+                </foreach>
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND status = #{query.status}
+            </if>
+            <if test="query.status == null or query.status == ''">
+                AND status = 'PUBLISHED'
+            </if>
+            <if test="query.tag != null and query.tag != ''">
+                AND FIND_IN_SET(#{query.tag}, tags)
+            </if>
+            <if test="query.isAd != null">
+                AND is_ad = #{query.isAd}
+            </if>
+            <!-- 活动时间阶段过滤：基于start_time和end_time判断活动处于哪个阶段 -->
+            <if test="query.activityStatus != null and query.activityStatus == 'upcoming'">
+                AND start_time IS NOT NULL AND start_time > NOW()
+            </if>
+            <if test="query.activityStatus != null and query.activityStatus == 'ongoing'">
+                AND start_time IS NOT NULL AND start_time &lt;= NOW()
+                AND (end_time IS NULL OR end_time > NOW())
+            </if>
+            <if test="query.activityStatus != null and query.activityStatus == 'past'">
+                AND end_time IS NOT NULL AND end_time &lt;= NOW()
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectPostList" resultType="com.campus.backend.entity.Post">
+        SELECT * FROM posts
+        <include refid="whereClause"/>
+        <choose>
+            <when test="query.sortBy == 'hot'">
+                ORDER BY (like_count * 2 + comment_count * 3 + view_count) DESC, created_at DESC
+            </when>
+            <when test="query.sortBy == 'likes'">
+                ORDER BY like_count DESC, created_at DESC
+            </when>
+            <otherwise>
+                ORDER BY is_pinned DESC, created_at DESC
+            </otherwise>
+        </choose>
+        LIMIT #{query.offset}, #{query.size}
+    </select>
+
+    <select id="selectPostCount" resultType="int">
+        SELECT COUNT(*) FROM posts
+        <include refid="whereClause"/>
+    </select>
+
+    <select id="searchPosts" resultType="map">
+        SELECT p.id, p.user_id, p.title, p.content, p.post_type,
+               p.view_count, p.like_count, p.comment_count,
+               p.tags, p.created_at,
+               u.nickname AS user_name, u.avatar AS user_avatar,
+               u.username AS user_username
+        FROM posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        <where>
+            p.status = 'PUBLISHED'
+            <if test="keyword != null and keyword != ''">
+                AND (p.title LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.content LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.tags LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.username LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY p.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="searchPostCount" resultType="int">
+        SELECT COUNT(*) FROM posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        <where>
+            p.status = 'PUBLISHED'
+            <if test="keyword != null and keyword != ''">
+                AND (p.title LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.content LIKE CONCAT('%', #{keyword}, '%')
+                     OR p.tags LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.username LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+</mapper>

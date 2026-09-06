@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campus.backend.mapper.ProductMapper">
+
+    <select id="selectProductList" resultType="com.campus.backend.entity.Product">
+        SELECT * FROM products
+        <where>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+            <if test="query.categoryId != null">
+                AND category_id = #{query.categoryId}
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (name LIKE CONCAT('%', #{query.keyword}, '%')
+                     OR description LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
+            <if test="query.sellerId != null">
+                AND seller_id = #{query.sellerId}
+            </if>
+            <if test="query.sellerIds != null and query.sellerIds.size() > 0">
+                AND seller_id IN
+                <foreach collection="query.sellerIds" item="sid" open="(" separator="," close=")">
+                    #{sid}
+                </foreach>
+            </if>
+            <if test="query.conditionLevel != null">
+                AND condition_level = #{query.conditionLevel}
+            </if>
+            <if test="query.minPrice != null">
+                AND price &gt;= #{query.minPrice}
+            </if>
+            <if test="query.maxPrice != null">
+                AND price &lt;= #{query.maxPrice}
+            </if>
+            <if test="query.hasStory != null">
+                AND has_story = #{query.hasStory}
+            </if>
+            <if test="query.tag != null and query.tag != ''">
+                AND FIND_IN_SET(#{query.tag}, tags)
+            </if>
+        </where>
+        <choose>
+            <when test="query.sortBy == 'price_asc'">ORDER BY price ASC</when>
+            <when test="query.sortBy == 'price_desc'">ORDER BY price DESC</when>
+            <when test="query.sortBy == 'view_count'">ORDER BY view_count DESC, created_at DESC</when>
+            <otherwise>ORDER BY created_at DESC</otherwise>
+        </choose>
+        LIMIT #{query.size} OFFSET #{query.offset}
+    </select>
+
+    <select id="selectProductCount" resultType="int">
+        SELECT COUNT(*) FROM products
+        <where>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+            <if test="query.categoryId != null">
+                AND category_id = #{query.categoryId}
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (name LIKE CONCAT('%', #{query.keyword}, '%')
+                     OR description LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
+            <if test="query.sellerId != null">
+                AND seller_id = #{query.sellerId}
+            </if>
+            <if test="query.sellerIds != null and query.sellerIds.size() > 0">
+                AND seller_id IN
+                <foreach collection="query.sellerIds" item="sid" open="(" separator="," close=")">
+                    #{sid}
+                </foreach>
+            </if>
+            <if test="query.conditionLevel != null">
+                AND condition_level = #{query.conditionLevel}
+            </if>
+            <if test="query.minPrice != null">
+                AND price &gt;= #{query.minPrice}
+            </if>
+            <if test="query.maxPrice != null">
+                AND price &lt;= #{query.maxPrice}
+            </if>
+            <if test="query.hasStory != null">
+                AND has_story = #{query.hasStory}
+            </if>
+        </where>
+    </select>
+
+    <update id="update">
+        UPDATE products
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="conditionLevel != null">condition_level = #{conditionLevel},</if>
+            <if test="imageUrls != null">image_urls = #{imageUrls},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="deliveryMethod != null">delivery_method = #{deliveryMethod},</if>
+            <if test="storyTitle != null">story_title = #{storyTitle},</if>
+            <if test="storyContent != null">story_content = #{storyContent},</if>
+            <if test="storyImages != null">story_images = #{storyImages},</if>
+            <if test="hasStory != null">has_story = #{hasStory},</if>
+            <if test="saleMode != null">sale_mode = #{saleMode},</if>
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="searchProducts" resultType="map">
+        SELECT pr.id, pr.name, pr.description, pr.price, pr.original_price,
+               pr.cover_image, pr.image_urls, pr.seller_id,
+               pr.condition_level, pr.status, pr.view_count, pr.like_count,
+               pr.location, pr.created_at,
+               u.nickname AS seller_name, u.avatar AS seller_avatar,
+               u.username AS seller_username
+        FROM products pr
+        LEFT JOIN users u ON pr.seller_id = u.id
+        <where>
+            pr.status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (pr.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR pr.description LIKE CONCAT('%', #{keyword}, '%')
+                     OR pr.tags LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.username LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY pr.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="searchProductCount" resultType="int">
+        SELECT COUNT(*) FROM products pr
+        LEFT JOIN users u ON pr.seller_id = u.id
+        <where>
+            pr.status = 1
+            <if test="keyword != null and keyword != ''">
+                AND (pr.name LIKE CONCAT('%', #{keyword}, '%')
+                     OR pr.description LIKE CONCAT('%', #{keyword}, '%')
+                     OR pr.tags LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR u.username LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,123 @@
+# PostgreSQL生产环境配置 (Render部署专用)
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/campus_marketplace}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 60000
+      validation-timeout: 5000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      initialization-fail-timeout: 60000
+  
+  sql:
+    init:
+      encoding: UTF-8
+      mode: always
+      schema-locations: classpath:schema-postgres.sql
+      data-locations: classpath:data-postgres.sql
+  
+  # 延迟初始化，给数据库更多时间启动
+  main:
+    lazy-initialization: true
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}  # Render环境使用update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+  
+  # 生产环境CORS配置
+  web:
+    cors:
+      allowed-origins: "${ALLOWED_ORIGINS:*}"  # Render环境允许所有来源
+      allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+      allowed-headers: "*"
+      allow-credentials: true
+  
+  # Redis配置 - 禁用Redis，使用内存缓存
+  data:
+    redis:
+      enabled: false
+  # 禁用Redis自动配置
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+mybatis:
+  mapper-locations: classpath:mappers/*.xml
+  type-aliases-package: com.campus.backend.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    default-statement-timeout: 3000
+    default-fetch-size: 100
+
+server:
+  port: ${SERVER_PORT:8080}
+  # 生产环境建议启用压缩
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# 生产环境日志配置
+logging:
+  level:
+    com.campus.backend: INFO
+    org.springframework: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+  file:
+    name: logs/application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: 86400000 # 24小时
+
+# 生产环境安全配置
+security:
+  require-ssl: false
+
+# 生产环境Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info"
+      base-path: "/actuator"
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+      probes:
+        enabled: true
+      db:
+        enabled: true
+      diskspace:
+        enabled: true
+      ping:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+    defaults:
+      enabled: true

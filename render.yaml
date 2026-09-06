@@ -1,0 +1,76 @@
+# Render 全栈部署配置
+# 文档: https://render.com/docs/yaml-spec
+
+services:
+  # 后端 Spring Boot 服务
+  - type: web
+    name: campus-marketplace-api
+    env: java
+    region: singapore  # 新加坡区域，中国大陆访问较好
+    plan: free
+    buildCommand: cd env-setup/backend && ./mvnw clean package -DskipTests
+    startCommand: cd env-setup/backend && java -jar target/backend-0.0.1-SNAPSHOT.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: campus-marketplace-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: campus-marketplace-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: campus-marketplace-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+        pattern: ^[a-zA-Z0-9]{32}$
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: ALLOWED_ORIGINS
+        value: "https://c2cmarket.store,https://www.c2cmarket.store,http://localhost:3000"
+    # 自定义API域名配置
+    domains:
+      - api.c2cmarket.store
+    autoDeploy: true
+
+  # 前端 Vue 静态站点
+  - type: web
+    name: campus-marketplace
+    env: static
+    region: singapore
+    plan: free
+    buildCommand: cd env-setup/frontend && npm install && npm run build
+    staticPublishPath: env-setup/frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://api.c2cmarket.store  # 使用自定义API域名
+      - key: VITE_APP_NAME
+        value: 校园二手交易平台
+      - key: VITE_APP_VERSION
+        value: 1.0.0
+    # 自定义域名配置
+    domains:
+      - c2cmarket.store
+      - www.c2cmarket.store
+    autoDeploy: true
+
+# 数据库服务
+databases:
+  - name: campus-marketplace-db
+    region: singapore
+    plan: free
+    databaseName: campus_marketplace
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
