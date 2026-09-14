@@ -242,7 +242,7 @@ function formatTime(timestamp) {
 .skeleton-item {
   display: flex;
   gap: var(--space-3);
-  padding: var(--space-3_5) 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-border-light);
 }
 

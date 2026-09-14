@@ -109,7 +109,7 @@ function formatDate(dateStr) {
 }
 
 .card-body {
-  padding: var(--space-3_5) var(--space-4);
+  padding: var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
   align-items: center;

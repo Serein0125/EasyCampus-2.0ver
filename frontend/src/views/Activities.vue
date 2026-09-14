@@ -303,7 +303,7 @@ function goToDetail(activityId) {
 }
 
 .skeleton-body {
-  padding: var(--space-3_5);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2_5);

@@ -274,7 +274,7 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3_5) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   background-color: var(--color-bg-primary);
   box-shadow: var(--shadow-sm);
 }
@@ -308,23 +308,24 @@ async function handleRegister() {
 }
 
 .form-container {
-  padding: var(--space-8) var(--space-6);
-  max-width: 420px;
+  padding: var(--space-10) var(--space-6) var(--space-8);
+  max-width: 440px;
   margin: 0 auto;
 }
 
 .input-group {
-  margin-bottom: var(--space-4_5);
+  margin-bottom: var(--space-5);
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-bg-secondary);
-  border: 2px solid transparent;
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--color-bg-primary);
+  border: 1.5px solid var(--color-gray-200);
   border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
   transition: all var(--duration-normal) var(--ease-out);
 }
 
@@ -376,10 +377,11 @@ async function handleRegister() {
 .agreement-check {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  align-items: flex-start;
+  gap: var(--space-1_5);
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-5_5);
+  margin: var(--space-1) 0 var(--space-5);
   cursor: pointer;
   line-height: var(--leading-relaxed);
 }
@@ -404,7 +406,8 @@ async function handleRegister() {
 
 .submit-btn {
   width: 100%;
-  padding: var(--space-3_5);
+  min-height: 52px;
+  padding: var(--space-4) var(--space-6);
   background-color: var(--color-gray-200);
   color: var(--color-text-tertiary);
   border: none;
@@ -434,12 +437,12 @@ async function handleRegister() {
 }
 
 .submit-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .error-msg {
-  margin-top: var(--space-3_5);
-  padding: var(--space-2_5);
+  margin-top: var(--space-4);
+  padding: var(--space-3);
   background-color: var(--color-rose-50);
   border: 1px solid var(--color-rose-100);
   border-radius: var(--radius-md);

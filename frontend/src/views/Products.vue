@@ -529,7 +529,7 @@ function handleScroll() {
 }
 
 .skeleton-body {
-  padding: var(--space-3) var(--space-3_5) var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-3);
 }
 
 .skeleton-line {
@@ -860,7 +860,7 @@ function handleScroll() {
     gap: var(--space-2);
     background: var(--color-bg-tertiary);
     border-radius: var(--radius-full);
-    padding: var(--space-2) var(--space-3_5);
+    padding: var(--space-2) var(--space-4);
     border: 1.5px solid transparent;
     transition: all var(--duration-normal) var(--ease-out);
   }
@@ -927,7 +927,7 @@ function handleScroll() {
   }
 
   .filter-tab {
-    padding: var(--space-1_5) var(--space-3_5);
+    padding: var(--space-1_5) var(--space-4);
     font-size: var(--text-xs);
   }
 

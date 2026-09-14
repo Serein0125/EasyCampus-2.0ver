@@ -401,7 +401,7 @@ body {
 .form-textarea,
 .form-select {
   width: 100%;
-  padding: var(--space-2_5) var(--space-3_5);
+  padding: var(--space-2_5) var(--space-4);
   border: 1.5px solid var(--color-border-light);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);

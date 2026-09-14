@@ -478,7 +478,7 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 
 .menu-item {
   width: 100%;
-  padding: var(--space-3_5) var(--space-5);
+  padding: var(--space-4) var(--space-5);
   font-size: var(--text-base);
   color: var(--color-text-primary);
   text-align: left;
@@ -621,7 +621,7 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 }
 
 .message-bubble {
-  padding: var(--space-4) var(--space-4_5);
+  padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-md);
   max-width: 280px;
   word-break: break-word;
