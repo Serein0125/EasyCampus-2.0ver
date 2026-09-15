@@ -63,6 +63,13 @@ app:
   version: 1.0.0
   description: 大学生课程期末作业项目
 
+# DeepSeek AI 配置（商品发布文案助手）
+# API Key 通过环境变量注入（PowerShell: setx DEEPSEEK_API_KEY "sk-xxx" 后重开终端生效），切勿提交真实 Key
+deepseek:
+  api-key: ${DEEPSEEK_API_KEY:}
+  base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+  model: ${DEEPSEEK_MODEL:deepseek-v4-flash-vision-exp}
+
 # Spring Boot Actuator配置
 management:
   endpoints:

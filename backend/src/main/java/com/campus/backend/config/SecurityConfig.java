@@ -42,6 +42,10 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configure(http))
             .csrf(csrf -> csrf.disable())
+            // 无状态 JWT 场景下必须显式保存 SecurityContext，否则 SSE/SseEmitter 等
+            // 异步派发（ASYNC dispatch）重走过滤器链时会丢失登录态，被当作匿名请求拦截，
+            // 且此时响应头已提交，异常无法以 JSON 形式返回，只能掐断连接（前端表现为 network error）
+            .securityContext(ctx -> ctx.requireExplicitSave(false))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // ========== 公开接口（无需认证） ==========

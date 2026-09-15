@@ -16,6 +16,28 @@
         <p class="upload-tip">第一张为封面图，最多上传9张（选填）</p>
       </section>
 
+      <section class="ai-section">
+        <div class="ai-card">
+          <div class="ai-head">
+            <span class="ai-spark">✨</span>
+            <div class="ai-head-text">
+              <div class="ai-title">AI 智能文案</div>
+              <div class="ai-subtitle">上传图片后一键生成标题与描述</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="ai-btn"
+            :disabled="aiGenerating"
+            @click="generateWithAI"
+          >
+            <span v-if="aiGenerating" class="ai-loading"></span>
+            {{ aiGenerating ? 'AI 正在识别商品...' : '✨ AI 生成文案' }}
+          </button>
+          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
+        </div>
+      </section>
+
       <section class="form-section">
         <div class="form-group">
           <label class="form-label required">商品标题</label>
@@ -177,7 +199,7 @@ import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useToast } from '../use/useToast'
-import { productApi, categoryApi } from '../services/api'
+import { productApi, categoryApi, getBaseURL } from '../services/api'
 import TagInput from '../components/TagInput.vue'
 import ImageUploader from '../components/ImageUploader.vue'
 
@@ -201,6 +223,11 @@ const submitting = ref(false)
 const categories = ref([])
 const categoriesLoading = ref(false)
 const tags = ref([])
+
+// AI 生成文案相关状态
+const aiGenerating = ref(false)
+const aiError = ref('')
+let aiAbortController: AbortController | null = null
 
 const tagPresets = [
   '数码', '书籍', '生活', '运动', '美食', '服饰', '美妆',
@@ -402,6 +429,128 @@ async function handleSubmit() {
   }
 }
 
+/**
+ * AI 生成商品文案：调用后端 SSE 流式接口，把大模型逐 token 的增量实时解析成标题与描述
+ * 请求治理：AbortController 可取消、生成中禁用防抖、流式累积 + 标记解析
+ */
+async function generateWithAI() {
+  if (aiGenerating.value) return
+
+  if (!imageUrls.value.length && !formData.value.name.trim()) {
+    toast.showToast('请先上传商品图片或填写标题', 'warning')
+    return
+  }
+
+  aiGenerating.value = true
+  aiError.value = ''
+  aiAbortController = new AbortController()
+
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`${getBaseURL()}/v2/ai/product/description`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({
+        imageUrls: imageUrls.value.slice(0, 1),
+        titleHint: formData.value.name.trim() || null
+      }),
+      signal: aiAbortController.signal
+    })
+
+    // 区分流式响应与 JSON 错误（如 API Key 未配置时后端返回普通 JSON）
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.includes('text/event-stream')) {
+      const json = await res.json().catch(() => null)
+      throw new Error(json?.message || `AI 服务异常(${res.status})`)
+    }
+
+    if (!res.body) throw new Error('当前浏览器不支持流式响应')
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    // 把 SSE 帧还原成纯文本：丢掉 "data:" 前缀与空行
+    const toText = (raw: string) =>
+      raw
+        .split('\n')
+        .filter((line) => line.trim() !== '')
+        .map((line) => (line.startsWith('data:') ? line.slice(5) : line))
+        .join('')
+
+    // 实时解析：标题取「标题：」到「描述：」之间的内容，描述取「描述：」之后的内容。
+    // 注意：模型输出可能不带换行（标题和描述紧挨着），所以不能用换行切分，只能按标记切分
+    const applyParsed = (text: string) => {
+      const hasTitle = /标题[:：]/.test(text)
+      const hasDesc = /描述[:：]/.test(text)
+
+      // 标题只有等「描述：」出现后才能确定边界，避免把描述误吞进标题
+      if (hasTitle && hasDesc) {
+        const titleMatch = text.match(/标题[:：]\s*(.*?)(?:描述[:：]|$)/)
+        if (titleMatch?.[1].trim()) {
+          formData.value.name = titleMatch[1].trim()
+          clearError('name')
+        }
+      }
+      if (hasDesc) {
+        const descMatch = text.match(/描述[:：]\s*([\s\S]*)$/)
+        if (descMatch?.[1].trim()) {
+          formData.value.description = descMatch[1].trim()
+          clearError('description')
+        }
+      }
+    }
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      // 检测流内错误标记（后端异常时推送 [ERROR] 前缀）
+      if (buffer.includes('[ERROR]')) {
+        throw new Error(buffer.replace(/[\s\S]*?\[ERROR\]/, '').trim() || '生成失败，请稍后重试')
+      }
+
+      // 流式实时回填
+      applyParsed(toText(buffer))
+    }
+
+    // 流结束兜底：模型若没有严格按「标题：/描述：」格式输出，也能尽量回填
+    const finalText = toText(buffer).trim()
+    const hasTitle = /标题[:：]/.test(finalText)
+    const hasDesc = /描述[:：]/.test(finalText)
+    if (hasTitle && !hasDesc) {
+      // 只输出了标题没输出描述
+      const titleOnly = finalText.match(/标题[:：]\s*(.+)$/)
+      if (titleOnly?.[1]) formData.value.name = titleOnly[1].trim()
+    } else if (!hasTitle && !hasDesc) {
+      // 既没有标题也没有描述标记：把整段正文当作描述回填（描述字段渲染支持换行）
+      if (finalText) {
+        formData.value.description = finalText
+        clearError('description')
+      }
+    }
+
+    if (formData.value.description.trim() || formData.value.name.trim()) {
+      toast.showToast('AI 文案已生成，请核对修改', 'success')
+    } else {
+      aiError.value = 'AI 未生成有效文案，请重试'
+      toast.showToast(aiError.value, 'warning')
+    }
+  } catch (e) {
+    if ((e as Error)?.name === 'AbortError') return
+    const msg = (e as Error)?.message || '生成失败，请稍后重试'
+    aiError.value = msg
+    toast.showToast(msg, 'error')
+  } finally {
+    aiGenerating.value = false
+    aiAbortController = null
+  }
+}
+
 onMounted(() => {
   loadCategories()
 })
@@ -506,6 +655,97 @@ onMounted(() => {
   background-color: #fff;
   padding: 20px 16px;
   margin-top: 10px;
+}
+
+.ai-section {
+  margin-top: 10px;
+  padding: 0 16px;
+}
+
+.ai-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 55%, #fefce8 100%);
+  border: 1px solid #dcfce7;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.ai-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ai-spark {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ai-head-text {
+  flex: 1;
+}
+
+.ai-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.ai-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ai-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.ai-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.ai-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.ai-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.ai-loading {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ai-spin 0.8s linear infinite;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #ef4444;
 }
 
 .section-title {

@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { AxiosRequestConfig } from 'axios'
 
 // 获取API基础URL（支持多环境配置）
-function getBaseURL(): string {
+export function getBaseURL(): string {
   // 优先使用环境变量（仅在有实际值时使用）
   const envBaseUrl = import.meta.env.VITE_API_BASE_URL
   if (envBaseUrl && envBaseUrl.trim() !== '') {
