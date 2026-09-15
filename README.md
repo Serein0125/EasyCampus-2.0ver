@@ -145,6 +145,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 ### 核心页面
 | 登录 | 商品列表 | 个人中心 | 设置 |
 |:---:|:---:|:---:|:---:|
-| ![登录](docs/screenshots/login.png) | ![商品](docs/screenshots/products.png) | ![我的](docs/screenshots/profile.png) | ![设置](docs/screenshots/settings.png) |
+| <img src="docs/screenshots/login.png" height="240"/> | ![商品](docs/screenshots/products.png) | ![我的](docs/screenshots/profile.png) | ![设置](docs/screenshots/settings.png) |
 
 本项目用于学习交流，欢迎 Star 与 Issue。
