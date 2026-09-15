@@ -103,11 +103,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { favoriteApi } from '../services/api'
 import { useToast } from '../use/useToast'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const items = ref([])
 const total = ref(0)
@@ -186,7 +187,16 @@ async function loadFavorites() {
     }
   } catch (e) {
     console.error('加载收藏失败:', e)
-    error.value = e?.message || '加载失败，请检查网络后重试'
+    // 401：登录态已过期（响应拦截器已清空本地凭证），引导重新登录而不是误报网络问题
+    if (e?.status === 401) {
+      error.value = '登录已过期，请重新登录'
+      toast.showToast('登录已过期，请重新登录', 'warning')
+      setTimeout(() => {
+        router.replace({ path: '/login', query: { redirect: route.fullPath } })
+      }, 800)
+      return
+    }
+    error.value = e?.message || '加载失败，请稍后重试'
   } finally {
     loading.value = false
   }

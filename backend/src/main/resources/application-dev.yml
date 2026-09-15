@@ -87,3 +87,7 @@ app:
     max-height: 1080
     chunk-size: 2097152  # 2MB per chunk
     temp-path: ./uploads/temp
+
+# JWT 配置
+jwt:
+  expiration: 259200000  # 3 天（3 × 24 × 3600 × 1000），开发演示环境免频繁重登

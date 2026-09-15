@@ -104,7 +104,7 @@ logging:
 # JWT配置（生产环境建议使用更强的密钥）
 jwt:
   secret: ${JWT_SECRET:your-production-jwt-secret-key-change-this-in-production}
-  expiration: 86400000 # 24小时
+  expiration: ${JWT_EXPIRATION:259200000} # 默认 3 天，可用环境变量覆盖
 
 # 文件上传配置（生产环境）
 app:

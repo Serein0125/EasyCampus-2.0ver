@@ -166,12 +166,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { productApi, postApi } from '../services/api'
 import { useToast } from '../use/useToast'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const toast = useToast()
 
@@ -339,10 +340,26 @@ async function loadData() {
       loadMyPosts()
     ])
 
+    const productsRejected = results[0].status === 'rejected'
+    const productsReason = productsRejected
+      ? (results[0] as PromiseRejectedResult).reason
+      : null
+
+    // 401：登录态已过期（响应拦截器已清空本地 token/user），引导重新登录，
+    // 不能再显示成「检查网络」——否则点重试仍是 401，陷入死循环
+    if (productsReason?.status === 401) {
+      error.value = '登录已过期，请重新登录'
+      toast.showToast('登录已过期，请重新登录', 'warning')
+      setTimeout(() => {
+        router.replace({ path: '/login', query: { redirect: route.fullPath } })
+      }, 800)
+      return
+    }
+
     if (results[0].status === 'fulfilled' && results[0].value.code === 200) {
       products.value = results[0].value.data || []
-    } else if (results[0].status === 'rejected') {
-      console.error('加载商品失败:', results[0].reason)
+    } else if (productsRejected) {
+      console.error('加载商品失败:', productsReason)
     }
 
     if (results[1].status === 'rejected') {
@@ -350,13 +367,13 @@ async function loadData() {
     }
 
     if (products.value.length === 0 && posts.value.length === 0) {
-      if (results[0].status === 'rejected' || (results[0].status === 'fulfilled' && results[0].value.code !== 200)) {
-        error.value = '加载失败，请检查网络后重试'
+      if (productsRejected || (results[0].status === 'fulfilled' && results[0].value.code !== 200)) {
+        error.value = '加载失败，请稍后重试'
       }
     }
   } catch (e) {
     console.error('加载数据失败:', e)
-    error.value = '加载失败，请检查网络后重试'
+    error.value = '加载失败，请稍后重试'
   } finally {
     loading.value = false
   }
