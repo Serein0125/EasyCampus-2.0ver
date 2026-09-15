@@ -134,4 +134,17 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 前端 35 个页面 · 14 个组件 · 16 个 API 模块 ｜ 后端 21 张数据表 · RESTful API · WebSocket 实时通道
 
+## 效果演示
+
+### ✨ AI 智能文案助手（上传商品图片，流式生成标题与描述）
+![AI文案助手](docs/screenshots/ai-copywriting.gif)
+
+### 💬 实时 IM 聊天（WebSocket 心跳保活 + 断线自动重连）
+![实时聊天](docs/screenshots/chat-websocket.gif)
+
+### 核心页面
+| 登录 | 商品列表 | 个人中心 | 设置 |
+|:---:|:---:|:---:|:---:|
+| ![登录](docs/screenshots/login.png) | ![商品](docs/screenshots/products.png) | ![我的](docs/screenshots/profile.png) | ![设置](docs/screenshots/settings.png) |
+
 本项目用于学习交流，欢迎 Star 与 Issue。
