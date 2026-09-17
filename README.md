@@ -148,7 +148,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 ![AI文案助手](docs/screenshots/ai-copywriting.gif)
 
 ### ✨ 经营数据看板（可视化展示发布/售出/成交额汇总、近 30 天浏览趋势、类目分布、浏览量 Top 商品）
-![经营看板](docs/screenshots/business-data.png)
+![经营看板](docs/screenshots/business-data.gif)
 
 ### 💬 实时 IM 聊天（WebSocket 心跳保活 + 断线自动重连）
 ![实时聊天](docs/screenshots/chat-websocket.gif)
