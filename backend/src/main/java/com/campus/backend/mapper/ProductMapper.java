@@ -54,4 +54,17 @@ public interface ProductMapper {
 
     @Select("<script>SELECT * FROM products WHERE id IN <foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach></script>")
     List<Product> selectByIds(@Param("ids") List<Long> ids);
+
+    // ==================== 卖家数据看板聚合查询 ====================
+    /** 卖家汇总：发布/在售/售出/累计浏览/获赞/成交额（status=2 记成交额） */
+    List<Map<String, Object>> selectSellerSummary(@Param("sellerId") Long sellerId);
+
+    /** 近30天按天聚合浏览/收藏/成交量（缺失日期由 Service 层补零） */
+    List<Map<String, Object>> selectSellerTrend(@Param("sellerId") Long sellerId);
+
+    /** 按类目聚合商品数与成交额 */
+    List<Map<String, Object>> selectSellerCategoryStats(@Param("sellerId") Long sellerId);
+
+    /** 浏览量 Top 商品 */
+    List<Map<String, Object>> selectSellerTopProducts(@Param("sellerId") Long sellerId);
 }

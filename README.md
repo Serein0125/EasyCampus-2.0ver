@@ -14,6 +14,7 @@
 | 二手交易 | 商品发布、搜索筛选、分类浏览、收藏、点赞、评论、上下架管理、**AI 智能文案生成** |
 | 社区帖子 | 图文发布、标签体系、点赞评论、信息流推荐 |
 | 实时聊天 | WebSocket 点对点私信、在线状态、未读数提醒 |
+| 经营数据看板 | 卖家视角 ECharts 可视化：发布/售出/成交额汇总、近 30 天浏览趋势、类目分布、浏览量 Top 商品 |
 | 更多 | 校园活动报名、组织管理、全局搜索、通知中心、广告推流（模拟支付） |
 
 ## 技术亮点
@@ -26,6 +27,7 @@
 - **图片服务**：服务端 Thumbnailator 压缩缩放，限制最大分辨率与体积
 - **安全防护**：BCrypt 密码散列、DOMPurify 净化富文本防 XSS、标签输入过滤
 - **设计系统**：CSS 变量设计令牌，通过 Tailwind CSS 4 `@theme` 映射，原子类渐进替换 scoped CSS
+- **数据可视化**：ECharts 按需引入 + 路由懒加载（不拖首屏），饼图/折线/柱状多类型图表，图表数据与服务端 SQL 聚合解耦（`GROUP BY` 类目/日期），点击图表联动查看明细
 - **性能优化**：路由懒加载、vendor 分包、骨架屏、无限滚动、下拉刷新
 - **工程化**：`vue-tsc` 类型检查构建、Knife4j 接口文档、Docker Compose 一键部署
 
@@ -85,6 +87,12 @@ npm run dev
 | 接口文档（Knife4j） | http://localhost:8080/doc.html |
 | 演示账号 | `user01` / `123456`（另含 user02~user80 及配套商品、帖子、评论数据） |
 
+> **看板演示数据（可选）**：以 user02 为展示卖家，为其灌入一批覆盖近 30 天、含已售出商品的种子数据，看"经营看板"效果更佳。在本地 MySQL 执行一次即可（幂等，可重复执行）：
+> ```powershell
+> mysql -uroot campus_market_dev < backend\src\main\resources\seed-dashboard-data.sql
+> ```
+> 执行后登录 `user02` / `123456` → 个人中心 → 经营看板，即可见真实聚合的可视化数据。
+
 ## 环境变量
 
 | 变量 | 必填 | 说明 |
@@ -138,6 +146,9 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ### ✨ AI 智能文案助手（上传商品图片，流式生成标题与描述）
 ![AI文案助手](docs/screenshots/ai-copywriting.gif)
+
+### ✨ 经营数据看板（可视化展示发布/售出/成交额汇总、近 30 天浏览趋势、类目分布、浏览量 Top 商品）
+![经营看板](docs/screenshots/business-data.png)
 
 ### 💬 实时 IM 聊天（WebSocket 心跳保活 + 断线自动重连）
 ![实时聊天](docs/screenshots/chat-websocket.gif)

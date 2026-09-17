@@ -151,4 +151,52 @@
         </where>
     </select>
 
+<!-- ==================== 卖家数据看板聚合 ==================== -->
+    <!-- 汇总：status 2=已售出，记成交额；下架(0)不计入经营统计 -->
+    <select id="selectSellerSummary" resultType="map">
+        SELECT
+            COUNT(*) AS published,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS onSale,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS sold,
+            COALESCE(SUM(view_count), 0) AS totalViews,
+            COALESCE(SUM(like_count), 0) AS totalLikes,
+            COALESCE(SUM(CASE WHEN status = 2 THEN price ELSE 0 END), 0) AS gmv
+        FROM products
+        WHERE seller_id = #{sellerId} AND status IN (1, 2, 3)
+    </select>
+
+    <!-- 近30天逐日聚合，缺失日期由 Service 层按日期序列补零 -->
+    <select id="selectSellerTrend" resultType="map">
+        SELECT
+            DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
+            SUM(view_count) AS views,
+            SUM(like_count) AS likes,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS sales
+        FROM products
+        WHERE seller_id = #{sellerId} AND status IN (1, 2, 3)
+          AND created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY day
+    </select>
+
+    <!-- 类目分布：商品数 + 成交额 -->
+    <select id="selectSellerCategoryStats" resultType="map">
+        SELECT
+            c.name AS categoryName,
+            COUNT(*) AS count,
+            COALESCE(SUM(p.price), 0) AS gmv
+        FROM products p
+        JOIN categories c ON p.category_id = c.id
+        WHERE p.seller_id = #{sellerId} AND p.status IN (1, 2, 3)
+        GROUP BY c.id, c.name
+    </select>
+
+    <!-- 浏览量 Top 商品 -->
+    <select id="selectSellerTopProducts" resultType="map">
+        SELECT name, price, view_count AS views, like_count AS likes
+        FROM products
+        WHERE seller_id = #{sellerId} AND status IN (1, 2, 3)
+        ORDER BY view_count DESC, created_at DESC
+        LIMIT 5
+    </select>
 </mapper>

@@ -961,6 +961,11 @@ export const organizationApi = {
   rejectOrg(id: number | string) { return api.put(`/v2/organizations/${id}/reject`) }
 }
 
+// ==================== 数据看板 API ====================
+export const dashboardApi = {
+  getStats() { return api.get('/v2/dashboard/stats') }
+}
+
 // 创建全局WebSocket实例
 export const wsManager = new WebSocketManager()
 

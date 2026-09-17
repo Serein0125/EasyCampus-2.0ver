@@ -166,6 +166,15 @@ const routes = [
     }
   },
   {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('../views/Dashboard.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '经营看板'
+    }
+  },
+  {
     path: '/favorites',
     name: 'Favorites',
     component: () => import('../views/Favorites.vue'),
