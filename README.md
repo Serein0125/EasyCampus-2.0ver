@@ -149,8 +149,6 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## 效果演示
 
-> 📌 **媒体文件待补充**：
-
 ### ✨ AI 智能文案助手
 ![AI文案助手](docs/screenshots/ai-copywriting.gif)
 
@@ -161,7 +159,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 ![实时聊天](docs/screenshots/chat-websocket.gif)
 
 ### 核心页面
-| 登录 | 商品列表 | 个人中心 | 设置 |
+| 注册页 | 商品列表 | 个人中心 | 设置 |
 | ---- | -------- | -------- | ---- |
 | <img src="docs/screenshots/register.png" height="240"/> | <img src="docs/screenshots/products.png" height="240"/> | <img src="docs/screenshots/profile.png" height="240"/> | <img src="docs/screenshots/settings.png" height="240"/> |
 
