@@ -2,8 +2,10 @@
 
 > 面向校园场景的二手交易与社区平台：商品交易、图文社区、实时聊天、校园活动、组织管理、AI 发布助手，前后端分离全栈实现。
 
-`Vue 3` · `TypeScript` · `Tailwind CSS 4` · `Pinia` · `Spring Boot 3` · `MySQL 8` · `WebSocket` · `DeepSeek AI` · `Docker`
+`Vue 3` · `TypeScript` · `Element Plus` · `Tailwind CSS 4` · `Pinia` · `Spring Boot 3` · `MySQL 8` · `WebSocket` · `DeepSeek AI` · `Docker`
 
+### ✨ 登录页动效
+![登录页动效](docs/screenshots/login-motion.gif)
 ---
 
 ## 功能总览
@@ -27,8 +29,10 @@
 - **图片服务**：服务端 Thumbnailator 压缩缩放，限制最大分辨率与体积
 - **安全防护**：BCrypt 密码散列、DOMPurify 净化富文本防 XSS、标签输入过滤
 - **设计系统**：CSS 变量设计令牌，通过 Tailwind CSS 4 `@theme` 映射，原子类渐进替换 scoped CSS
+- **组件库重构**：全站 35 个页面 + 14 个组件统一迁移到 Element Plus，按需自动引入（`unplugin-vue-components`），主题令牌覆盖为品牌绿；同步移除早期移动端 H5 适配，聚焦桌面端体验
 - **数据可视化**：ECharts 按需引入 + 路由懒加载（不拖首屏），饼图/折线/柱状多类型图表，图表数据与服务端 SQL 聚合解耦（`GROUP BY` 类目/日期），点击图表联动查看明细
-- **性能优化**：路由懒加载、vendor 分包、骨架屏、无限滚动、下拉刷新
+- **前端动效（无第三方库）**：登录页自研 Canvas 粒子场（指针吸附/排斥 + 邻近连线，离屏 sprite 替代 `shadowBlur`、按面积自适应粒子数、DPR 上限 2、页面隐藏暂停）与卡片边缘柔光跟随；三处 rAF 动效共用单一调度器；完整接入 `prefers-reduced-motion` 降级
+- **性能优化**：路由懒加载、vendor 分包、Element Plus / ECharts 独立 chunk、骨架屏、无限滚动
 - **工程化**：`vue-tsc` 类型检查构建、Knife4j 接口文档、Docker Compose 一键部署
 
 ## 技术栈
@@ -37,15 +41,16 @@
 
 | 类别 | 技术 |
 |------|------|
-| 核心框架 | Vue 3.4 —— Composition API、`<script setup>`、类型化 props/emits 组件通信、`provide/inject` 全局能力注入 |
+| 核心框架 | Vue 3.4 —— Composition API、`<script setup>`、类型化 props/emits 组件通信、自定义组合式函数封装可复用逻辑 |
 | 开发语言 | TypeScript 5.4 —— API 响应接口建模、泛型封装请求层，`vue-tsc --noEmit` 构建期类型检查 |
 | 构建工具 | Vite 5 —— 开发代理（`/api` → 8080）、多环境变量注入、`manualChunks` vendor 分包、路由组件动态 `import()` 懒加载 |
+| UI 组件库 | Element Plus 2.14 —— `unplugin-auto-import` + `unplugin-vue-components` 按需自动引入，`ElConfigProvider` 注入中文语言包，主题令牌覆盖为品牌绿 |
 | 样式方案 | Tailwind CSS 4 —— `@tailwindcss/vite` 插件、`@theme` 映射 CSS 变量设计令牌（色板/阴影/动画曲线）、原子类渐进替换 scoped CSS |
 | 路由 | Vue Router 4 —— History 模式、35 个路由全量懒加载、全局前置守卫 + 白名单鉴权、动态页面标题 |
 | 状态管理 | Pinia（setup Store 写法）+ `pinia-plugin-persistedstate` 持久化 + 自定义 `splitStorage` 分键存储 token/user，规避 API 层与 Store 的循环依赖 |
 | 网络层 | Axios —— 请求拦截器自动携带 JWT、响应拦截器统一错误与 401 处理、多环境 baseURL 策略（开发走 Vite 代理，生产同源 `/api`）；AI 文案采用原生 fetch + `ReadableStream` 解析 SSE，打字机效果实时回填 |
 | 实时通信 | 原生 WebSocket 封装管理器 —— 心跳保活、指数退避重连、消息订阅分发 |
-| 体验细节 | 骨架屏、无限滚动、下拉刷新、全局 Toast/确认弹窗、全屏图片查看器 |
+| 体验细节 | 骨架屏、无限滚动、全局 Toast/确认弹窗（ElMessage/ElMessageBox）、全屏图片查看器、无障碍动效降级（`prefers-reduced-motion`） |
 | 工程化 | ESLint + Prettier 代码规范、DOMPurify 防 XSS、构建产物 gzip 压缩 |
 
 ### 后端
@@ -114,7 +119,7 @@ npm run dev
 │       ├── services/api.ts      # Axios 实例 + 16 个 API 模块 + WebSocket 管理器
 │       ├── store/               # Pinia 状态管理（auth / notification，setup Store + 持久化）
 │       ├── router/              # 路由配置（懒加载 + 全局守卫）
-│       ├── use/                 # 组合式函数（useToast / usePullRefresh）
+│       ├── use/                 # 组合式函数（useToast / useEdgeGlow / useRafTicker / useReducedMotion）
 │       └── assets/css/          # 设计系统（CSS 变量 + Tailwind @theme）
 ├── backend/                     # 后端 Spring Boot 3
 │   └── src/main/java/com/campus/backend/
@@ -144,18 +149,22 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## 效果演示
 
-### ✨ AI 智能文案助手（上传商品图片，流式生成标题与描述）
+> 📌 **媒体文件待补充**：
+
+### ✨ AI 智能文案助手
 ![AI文案助手](docs/screenshots/ai-copywriting.gif)
 
-### ✨ 经营数据看板（可视化展示发布/售出/成交额汇总、近 30 天浏览趋势、类目分布、浏览量 Top 商品）
+### ✨ 经营数据看板
 ![经营看板](docs/screenshots/business-data.gif)
 
-### 💬 实时 IM 聊天（WebSocket 心跳保活 + 断线自动重连）
+### ✨ 实时 IM 聊天
 ![实时聊天](docs/screenshots/chat-websocket.gif)
 
 ### 核心页面
 | 登录 | 商品列表 | 个人中心 | 设置 |
 | ---- | -------- | -------- | ---- |
-| <img src="docs/screenshots/login.png" height="240"/> | <img src="docs/screenshots/products.png" height="240"/> | <img src="docs/screenshots/profile.png" height="240"/> | <img src="docs/screenshots/settings.png" height="240"/> |
+| <img src="docs/screenshots/register.png" height="240"/> | <img src="docs/screenshots/products.png" height="240"/> | <img src="docs/screenshots/profile.png" height="240"/> | <img src="docs/screenshots/settings.png" height="240"/> |
+
+---
 
 本项目用于学习交流，欢迎 Star 与 Issue。
