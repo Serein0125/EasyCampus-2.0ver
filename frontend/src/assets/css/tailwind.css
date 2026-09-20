@@ -97,3 +97,29 @@
     }
   }
 }
+
+/*
+ * Element Plus 主题对齐
+ * 本文件在 main.ts 中于 element-plus/dist/index.css 之后加载，
+ * 在这里用未分层 :root 覆盖 EP 的默认蓝色变量，统一为项目绿色系 token。
+ * 覆盖后 el-button type=primary / el-switch / el-radio 等均呈现绿色主色调。
+ */
+:root {
+  --el-color-primary: #10b981;
+  --el-color-primary-light-3: #43cfa1;
+  --el-color-primary-light-5: #73dcbb;
+  --el-color-primary-light-7: #a8ead3;
+  --el-color-primary-light-8: #c2f0e1;
+  --el-color-primary-light-9: #e1f8f1;
+  --el-color-primary-dark-2: #0d9467;
+
+  --el-color-success: #10b981;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-error: #ef4444;
+  --el-color-info: #3b82f6;
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+}

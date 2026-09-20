@@ -1,27 +1,13 @@
 <template>
   <div class="activities-page">
-    <!-- 下拉刷新指示器 -->
-    <div class="pull-refresh-indicator" :style="{ transform: `translateY(${pullDistance}px)`, transition: isRefreshing ? 'none' : 'transform 0.3s ease' }">
-      <div v-if="pullDistance > 0 || isRefreshing" class="pull-indicator-inner">
-        <div class="pull-spinner" :class="{ spinning: isRefreshing }"></div>
-        <span class="pull-text">{{ isRefreshing ? '刷新中...' : canTrigger ? '松手刷新' : '下拉刷新' }}</span>
-      </div>
-    </div>
-
     <header class="page-header">
       <h1 class="page-title">校园活动</h1>
     </header>
 
     <div class="activity-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.value }"
-        @click="switchTab(tab.value)"
-      >
-        {{ tab.label }}
-      </button>
+      <el-tabs v-model="activeTab" @tab-change="switchTab">
+        <el-tab-pane v-for="tab in tabs" :key="tab.value" :name="tab.value" :label="tab.label" />
+      </el-tabs>
     </div>
 
     <main class="activity-list">
@@ -42,11 +28,9 @@
         <button @click="loadActivities()" class="retry-btn">点击重试</button>
       </div>
 
-      <div v-else-if="activities.length === 0" class="empty-state">
-        <div class="empty-icon">📅</div>
-        <h3 class="empty-title">{{ emptyTitle }}</h3>
-        <p class="empty-desc">{{ emptyDesc }}</p>
-      </div>
+      <el-empty v-else-if="activities.length === 0" :description="emptyTitle">
+        <p v-if="emptyDesc" class="empty-desc">{{ emptyDesc }}</p>
+      </el-empty>
 
       <div v-else class="activity-grid">
         <ActivityCard
@@ -77,7 +61,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { activityApi } from '../services/api'
 import ActivityCard from '../components/ActivityCard.vue'
-import { usePullRefresh } from '../use/usePullRefresh'
 
 const router = useRouter()
 
@@ -163,13 +146,6 @@ function loadMore() {
   loadActivities(true)
 }
 
-// 下拉刷新：重新加载活动数据
-const { isRefreshing, pullDistance, canTrigger } = usePullRefresh(async () => {
-  page.value = 1
-  hasMore.value = true
-  await loadActivities()
-})
-
 function switchTab(tab) {
   activeTab.value = tab
 }
@@ -205,46 +181,12 @@ function goToDetail(activityId) {
 }
 
 .activity-tabs {
-  display: flex;
-  gap: 0;
   padding: 0 var(--space-4);
   background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-light);
 }
 
-.tab-btn {
-  flex: 1;
-  padding: var(--space-3) 0;
-  border: none;
-  background: none;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  position: relative;
-  transition: all var(--duration-normal) var(--ease-out);
-  font-family: var(--font-sans);
-}
-
-.tab-btn:hover {
-  color: var(--color-primary-500);
-}
-
-.tab-btn.active {
-  color: var(--color-primary-600);
-  font-weight: var(--font-bold);
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-full);
+.activity-tabs :deep(.el-tabs__header) {
+  margin: 0;
 }
 
 .activity-grid {
@@ -366,27 +308,10 @@ function goToDetail(activityId) {
   transform: translateY(0) scale(0.98);
 }
 
-.empty-state {
-  text-align: center;
-  padding: var(--space-20) var(--space-5);
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: var(--space-4);
-  opacity: 0.6;
-}
-
-.empty-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-
 .empty-desc {
   font-size: var(--text-sm);
   color: var(--color-text-tertiary);
+  margin: 0;
 }
 
 .load-more {
@@ -437,38 +362,5 @@ function goToDetail(activityId) {
   flex: 1;
   height: 1px;
   background: linear-gradient(to right, transparent, var(--color-border-light), transparent);
-}
-
-/* 下拉刷新指示器 */
-.pull-refresh-indicator {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  z-index: 5;
-}
-.pull-indicator-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-tertiary, #9ca3af);
-  font-size: 13px;
-}
-.pull-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--color-border-light, #e5e7eb);
-  border-top-color: var(--color-primary-500, #10b981);
-  border-radius: 50%;
-}
-.pull-spinner.spinning {
-  animation: pullRefreshSpin 0.8s linear infinite;
-}
-@keyframes pullRefreshSpin {
-  to { transform: rotate(360deg); }
 }
 </style>

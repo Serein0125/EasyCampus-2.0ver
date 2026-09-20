@@ -12,12 +12,18 @@
 
     <main class="main-content">
       <div class="fav-tabs">
-        <button :class="{ active: activeType === 'PRODUCT' }" @click="switchType('PRODUCT')">
-          商品收藏<span v-if="productCount > 0"> ({{ productCount }})</span>
-        </button>
-        <button :class="{ active: activeType === 'POST' }" @click="switchType('POST')">
-          帖子收藏<span v-if="postCount > 0"> ({{ postCount }})</span>
-        </button>
+        <el-tabs :model-value="activeType" @tab-change="switchType">
+          <el-tab-pane name="PRODUCT">
+            <template #label>
+              商品收藏<span v-if="productCount > 0"> ({{ productCount }})</span>
+            </template>
+          </el-tab-pane>
+          <el-tab-pane name="POST">
+            <template #label>
+              帖子收藏<span v-if="postCount > 0"> ({{ postCount }})</span>
+            </template>
+          </el-tab-pane>
+        </el-tabs>
       </div>
       <div v-if="loading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -30,60 +36,63 @@
         <button @click="loadFavorites" class="retry-btn">重试</button>
       </div>
 
-      <div v-else-if="items.length === 0" class="empty-state">
-        <div class="empty-icon">❤️</div>
-        <h3 v-if="activeType === 'PRODUCT'">还没有收藏商品</h3>
-        <h3 v-else>还没有收藏帖子</h3>
-        <p v-if="activeType === 'PRODUCT'">去逛逛，收藏感兴趣的商品吧</p>
-        <p v-else>去社区看看，收藏感兴趣的帖子吧</p>
-        <router-link to="/products" class="browse-btn" v-if="activeType === 'PRODUCT'">逛一逛</router-link>
-        <router-link to="/community" class="browse-btn" v-else>去社区</router-link>
-      </div>
+      <el-empty v-else-if="items.length === 0" :description="activeType === 'PRODUCT' ? '还没有收藏商品' : '还没有收藏帖子'">
+        <p v-if="activeType === 'PRODUCT'" class="empty-sub">去逛逛，收藏感兴趣的商品吧</p>
+        <p v-else class="empty-sub">去社区看看，收藏感兴趣的帖子吧</p>
+        <router-link :to="activeType === 'PRODUCT' ? '/products' : '/community'">
+          <el-button type="primary" round>{{ activeType === 'PRODUCT' ? '逛一逛' : '去社区' }}</el-button>
+        </router-link>
+      </el-empty>
 
       <div v-else-if="activeType === 'PRODUCT'" class="product-list">
-        <div
+        <el-card
           v-for="product in items"
           :key="product.id"
-          class="product-card"
+          shadow="hover"
+          :body-style="{ padding: '0px' }"
           @click="goToDetail(product.id)"
         >
-          <div class="product-image">
-            <img
-              v-if="product.coverImage"
-              :src="product.coverImage"
-              alt=""
-              loading="lazy"
-            />
-            <div v-else class="image-placeholder">
-              <span>📦</span>
+          <div class="product-card">
+            <div class="product-image">
+              <img
+                v-if="product.coverImage"
+                :src="product.coverImage"
+                alt=""
+                loading="lazy"
+              />
+              <div v-else class="image-placeholder">
+                <span>📦</span>
+              </div>
             </div>
+            <div class="product-info">
+              <h3 class="product-name">{{ product.name }}</h3>
+              <div class="product-meta">
+                <span class="product-price">¥{{ product.price }}</span>
+                <span v-if="product.originalPrice" class="product-original">¥{{ product.originalPrice }}</span>
+              </div>
+              <div class="product-footer">
+                <span class="product-status" :class="{ 'on-sale': product.status === 1 }">
+                  {{ getStatusText(product.status) }}
+                </span>
+                <span class="fav-time">{{ formatTime(product.favoritedAt) }}</span>
+              </div>
+            </div>
+            <button @click.stop="removeFavoriteItem(product.id)" class="unfav-btn" title="取消收藏">
+              ❤️
+            </button>
           </div>
-          <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-            <div class="product-meta">
-              <span class="product-price">¥{{ product.price }}</span>
-              <span v-if="product.originalPrice" class="product-original">¥{{ product.originalPrice }}</span>
-            </div>
-            <div class="product-footer">
-              <span class="product-status" :class="{ 'on-sale': product.status === 1 }">
-                {{ getStatusText(product.status) }}
-              </span>
-              <span class="fav-time">{{ formatTime(product.favoritedAt) }}</span>
-            </div>
-          </div>
-          <button @click.stop="removeFavoriteItem(product.id)" class="unfav-btn" title="取消收藏">
-            ❤️
-          </button>
-        </div>
+        </el-card>
       </div>
 
       <div v-else-if="activeType === 'POST'" class="post-list">
-          <div
-            v-for="post in items"
-            :key="post.id"
-            class="post-card"
-            @click="goToPost(post.id)"
-          >
+        <el-card
+          v-for="post in items"
+          :key="post.id"
+          shadow="hover"
+          :body-style="{ padding: '0px' }"
+          @click="goToPost(post.id)"
+        >
+          <div class="post-card">
             <div class="post-info">
               <h3 class="post-title">{{ post.title }}</h3>
               <p class="post-excerpt">{{ truncate(post.content, 80) }}</p>
@@ -96,7 +105,8 @@
               ❤️
             </button>
           </div>
-        </div>
+        </el-card>
+      </div>
     </main>
   </div>
 </template>
@@ -285,33 +295,15 @@ async function loadCounts() {
 }
 
 .fav-tabs {
-  display: flex;
-  gap: 0;
   margin-bottom: 16px;
   background: #fff;
   border-radius: 12px;
-  padding: 4px;
+  padding: 0 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.fav-tabs button {
-  flex: 1;
-  padding: 10px 0;
-  border: none;
-  background: none;
-  font-size: 14px;
-  font-weight: 500;
-  color: #999;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.fav-tabs button.active {
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+.fav-tabs :deep(.el-tabs__header) {
+  margin: 0;
 }
 
 .loading-state {
@@ -353,24 +345,10 @@ async function loadCounts() {
   cursor: pointer;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state h3 { font-size: 18px; color: #333; margin: 0 0 8px; }
-.empty-state p { color: #999; margin-bottom: 20px; }
-
-.browse-btn {
-  display: inline-block;
-  padding: 12px 32px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-  text-decoration: none;
-  border-radius: 24px;
-  font-size: 15px;
-  font-weight: 600;
+.empty-sub {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #999;
 }
 
 .product-list {
@@ -383,11 +361,7 @@ async function loadCounts() {
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .product-card:active {
@@ -506,11 +480,7 @@ async function loadCounts() {
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .post-card:active {

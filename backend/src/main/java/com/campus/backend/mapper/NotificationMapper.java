@@ -3,6 +3,7 @@ package com.campus.backend.mapper;
 import com.campus.backend.entity.Notification;
 import org.apache.ibatis.annotations.*;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface NotificationMapper {
@@ -28,6 +29,16 @@ public interface NotificationMapper {
     /** 获取用户未读通知数 */
     @Select("SELECT COUNT(*) FROM notifications WHERE user_id = #{userId} AND is_read = false")
     int countUnread(@Param("userId") Long userId);
+
+    /** 按类型统计用户未读通知数（GROUP BY 一次聚合，供通知页各栏目角标使用） */
+    @Select("SELECT type, COUNT(*) AS cnt FROM notifications " +
+            "WHERE user_id = #{userId} AND is_read = false GROUP BY type")
+    List<Map<String, Object>> countUnreadByType(@Param("userId") Long userId);
+
+    /** 标记用户某一类型的所有通知为已读（进入对应栏目时调用） */
+    @Update("UPDATE notifications SET is_read = true " +
+            "WHERE user_id = #{userId} AND type = #{type} AND is_read = false")
+    int markTypeAsRead(@Param("userId") Long userId, @Param("type") String type);
 
     /** 标记单条通知为已读 */
     @Update("UPDATE notifications SET is_read = true WHERE id = #{id} AND user_id = #{userId}")

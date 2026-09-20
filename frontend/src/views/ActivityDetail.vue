@@ -27,17 +27,19 @@
     </div>
 
     <main v-else-if="activity" class="detail-content">
-      <section class="banner-section">
-        <img v-if="activity.coverImage" :src="activity.coverImage" class="banner-img" loading="lazy" @error="onBannerError" />
-        <div v-else class="banner-placeholder">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-        </div>
-        <div class="banner-overlay">
-          <span class="activity-status" :class="statusClass">{{ statusText }}</span>
-        </div>
-      </section>
+      <el-card shadow="never" class="banner-card">
+        <section class="banner-section">
+          <img v-if="activity.coverImage" :src="activity.coverImage" class="banner-img" loading="lazy" @error="onBannerError" />
+          <div v-else class="banner-placeholder">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <div class="banner-overlay">
+            <span class="activity-status" :class="statusClass">{{ statusText }}</span>
+          </div>
+        </section>
+      </el-card>
 
-      <section class="info-card">
+      <el-card shadow="never" class="info-card">
         <h1 class="activity-title">{{ activity.title }}</h1>
 
         <div class="meta-grid">
@@ -75,21 +77,21 @@
         <div v-if="activityTags.length" class="activity-tags">
           <span v-for="tag in activityTags" :key="tag" class="tag-hashtag">{{ tag }}</span>
         </div>
-      </section>
+      </el-card>
 
-      <section class="organizer-card" @click="goToOrganizer">
+      <el-card shadow="never" class="organizer-card" @click="goToOrganizer">
         <img :src="activity.userAvatar || defaultAvatar" class="organizer-avatar" @error="onAvatarError" loading="lazy" />
         <div class="organizer-info">
           <span class="organizer-name">{{ activity.userName || '活动组织者' }}</span>
           <span class="organizer-label">活动发起人</span>
         </div>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
-      </section>
+      </el-card>
 
-      <section class="description-card">
+      <el-card shadow="never" class="description-card">
         <h3 class="section-heading">活动介绍</h3>
         <div class="description-body" v-html="renderedContent"></div>
-      </section>
+      </el-card>
 
       <section class="comment-section-wrapper">
         <CommentSection :target-id="activity.id" :target-type="'post'" :initial-comments="[]" />
@@ -104,30 +106,20 @@
           <span>{{ activity.commentCount || 0 }}</span>
         </button>
       </div>
-      <button class="join-btn" @click="showContactCard" :disabled="!activity.contact">
+      <el-button type="primary" round class="join-btn" @click="showContactCard" :disabled="!activity.contact">
         {{ activity.contact ? '立即报名' : '暂无联系方式' }}
-      </button>
+      </el-button>
     </footer>
 
     <!-- 联系方式卡片弹窗 -->
-    <div v-if="contactCardVisible" class="contact-overlay" @click.self="contactCardVisible = false">
-      <div class="contact-card">
-        <div class="contact-card-header">
-          <span class="contact-card-title">报名联系方式</span>
-          <button class="contact-card-close" @click="contactCardVisible = false">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <div class="contact-card-body">
-          <p class="contact-hint">请联系活动发起人报名：</p>
-          <div class="contact-value-row">
-            <span class="contact-value">{{ activity.contact }}</span>
-            <button class="copy-btn" @click="copyContact">复制</button>
-          </div>
-          <p class="contact-tip">复制后可通过微信/QQ/手机号添加发起人</p>
-        </div>
+    <el-dialog v-model="contactCardVisible" title="报名联系方式" width="360px" align-center>
+      <p class="contact-hint">请联系活动发起人报名：</p>
+      <div class="contact-value-row">
+        <span class="contact-value">{{ activity.contact }}</span>
+        <el-button type="primary" size="small" round @click="copyContact">复制</el-button>
       </div>
-    </div>
+      <p class="contact-tip">复制后可通过微信/QQ/手机号添加发起人</p>
+    </el-dialog>
   </div>
 </template>
 
@@ -274,6 +266,7 @@ function formatDateTime(d) {
 
 .detail-content { padding-top: 56px; }
 
+.banner-card :deep(.el-card__body) { padding: 0; }
 .banner-section { position: relative; background: #FFFFFF; }
 .banner-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 .banner-placeholder { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg, #FFF7E6, #FFE7BA); display: flex; align-items: center; justify-content: center; }
@@ -283,7 +276,7 @@ function formatDateTime(d) {
 .activity-status.ongoing { background: linear-gradient(135deg, #52c41a, #73d13d); }
 .activity-status.past { background: rgba(0,0,0,0.35); }
 
-.info-card { background: #FFFFFF; padding: 20px 16px; }
+.info-card :deep(.el-card__body) { padding: 20px 16px; }
 .activity-title { font-size: 20px; font-weight: 700; color: var(--color-text-primary, #333); margin: 0 0 16px; line-height: 1.4; }
 
 .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 8px; }
@@ -292,7 +285,8 @@ function formatDateTime(d) {
 .meta-label { display: block; font-size: 12px; color: var(--color-text-tertiary, #999); margin-bottom: 2px; }
 .meta-value { font-size: 14px; font-weight: 600; color: var(--color-text-primary, #333); }
 
-.organizer-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: #FFFFFF; margin-top: 10px; cursor: pointer; }
+.organizer-card { margin-top: 10px; cursor: pointer; }
+.organizer-card :deep(.el-card__body) { display: flex; align-items: center; gap: 12px; padding: 16px; }
 .organizer-card:active { background: #fafafa; }
 .organizer-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #eee; flex-shrink: 0; }
 .organizer-info { flex: 1; display: flex; flex-direction: column; }
@@ -313,7 +307,8 @@ function formatDateTime(d) {
   cursor: pointer;
 }
 
-.description-card { background: #FFFFFF; padding: 20px 16px; margin-top: 10px; }
+.description-card { margin-top: 10px; }
+.description-card :deep(.el-card__body) { padding: 20px 16px; }
 .section-heading { font-size: 17px; font-weight: 700; color: var(--color-text-primary, #333); margin: 0 0 12px; }
 .description-body { font-size: 15px; line-height: 1.7; color: #444; white-space: pre-wrap; word-break: break-word; }
 
@@ -323,22 +318,12 @@ function formatDateTime(d) {
 .bottom-actions { display: flex; align-items: center; gap: 4px; }
 .action-btn { display: flex; align-items: center; gap: 4px; padding: 8px 10px; border: none; background: none; color: var(--color-text-secondary, #666); cursor: pointer; border-radius: 4px; font-size: 14px; }
 .action-btn:active { background: var(--color-bg-secondary, #f0f2f5); }
-.join-btn { margin-left: auto; padding: 10px 28px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399)); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
-.join-btn:active { transform: scale(0.96); }
-.join-btn:disabled { background: #ccc; color: var(--color-text-tertiary, #999); cursor: not-allowed; }
+.join-btn { margin-left: auto; border: none; background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399)); font-weight: 700; }
+.join-btn:hover, .join-btn:focus { background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399)); }
 
-/* 联系方式卡片弹窗 */
-.contact-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 300; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.contact-card { background: #fff; border-radius: 16px; width: 100%; max-width: 360px; overflow: hidden; }
-.contact-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--color-bg-secondary, #f0f2f5); }
-.contact-card-title { font-size: 16px; font-weight: 600; color: var(--color-text-primary, #333); }
-.contact-card-close { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; background: none; color: var(--color-text-tertiary, #999); cursor: pointer; border-radius: 50%; }
-.contact-card-close:active { background: #f5f5f5; }
-.contact-card-body { padding: 20px; }
+/* 联系方式弹窗 */
 .contact-hint { font-size: 14px; color: var(--color-text-secondary, #666); margin: 0 0 12px; }
 .contact-value-row { display: flex; align-items: center; gap: 12px; background: var(--color-primary-50, #ecfdf5); border: 1px solid var(--color-primary-200, #a7f3d0); border-radius: 10px; padding: 14px 16px; }
 .contact-value { flex: 1; font-size: 18px; font-weight: 700; color: var(--color-primary-600, #059669); letter-spacing: 0.5px; }
-.copy-btn { padding: 6px 16px; border-radius: 6px; border: none; background: var(--color-primary-500, #10b981); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.copy-btn:active { opacity: 0.85; }
 .contact-tip { font-size: 12px; color: var(--color-text-tertiary, #999); margin: 12px 0 0; }
 </style>

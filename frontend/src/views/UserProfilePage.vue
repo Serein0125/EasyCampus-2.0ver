@@ -9,20 +9,15 @@
     </header>
 
     <div v-if="loading" class="loading-state">
-      <div class="skeleton-avatar"></div>
-      <div class="skeleton-line short"></div>
-      <div class="skeleton-line medium"></div>
-      <div class="skeleton-line long"></div>
+      <el-skeleton animated :rows="7" class="profile-skeleton" />
     </div>
 
-    <div v-else-if="error" class="error-state">
-      <span class="error-icon">😕</span>
-      <p>{{ error }}</p>
-      <button @click="loadProfile" class="retry-btn">重试</button>
-    </div>
+    <el-empty v-else-if="error" :description="error" class="error-state">
+      <el-button type="primary" round @click="loadProfile">重试</el-button>
+    </el-empty>
 
     <main v-else-if="profile" class="profile-content">
-      <section class="profile-card">
+      <el-card shadow="never" class="profile-card">
         <img :src="profile.avatar || defaultAvatar" class="profile-avatar" @error="onAvatarError" loading="lazy" />
         <h2 class="profile-name">{{ profile.nickname || profile.username }}</h2>
         <p class="profile-id">@{{ profile.username }}</p>
@@ -50,60 +45,56 @@
         </div>
 
         <div v-if="isSelf" class="self-actions">
-          <button @click="$router.push('/profile')" class="action-btn edit-btn">编辑资料</button>
+          <el-button class="edit-btn" round @click="$router.push('/profile')">编辑资料</el-button>
         </div>
         <div v-else class="visit-actions">
-          <button class="action-btn chat-btn" @click="startChat">
+          <el-button type="primary" round class="chat-btn" @click="startChat">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             私聊
-          </button>
-          <button class="action-btn follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
+          </el-button>
+          <el-button round class="follow-btn" :class="{ followed: isFollowing }" @click="toggleFollow">
             {{ isFollowing ? '已关注' : '+ 关注' }}
-          </button>
+          </el-button>
         </div>
-      </section>
+      </el-card>
 
-      <section class="posts-section">
+      <el-card shadow="never" class="posts-section">
         <h3 class="section-title">{{ isSelf ? '我的帖子' : 'TA的帖子' }}</h3>
 
         <div v-if="postsLoading" class="posts-loading">
-          <div v-for="i in 3" :key="i" class="skeleton-post"></div>
+          <el-skeleton v-for="i in 3" :key="i" animated :rows="3" class="post-skeleton" />
         </div>
-        <div v-else-if="posts.length === 0" class="posts-empty">暂无帖子</div>
+        <el-empty v-else-if="posts.length === 0" description="暂无帖子" :image-size="80" class="posts-empty" />
         <div v-else class="posts-list">
           <PostCard v-for="post in posts" :key="post.id" :post="post" @click="goToPost(post.id)" />
         </div>
 
         <div v-if="!postsLoading && postsMore && posts.length > 0" class="load-more">
-          <button @click="loadMorePosts" :disabled="postsLoadingMore" class="load-more-btn">
+          <el-button round @click="loadMorePosts" :disabled="postsLoadingMore" class="load-more-btn">
             {{ postsLoadingMore ? '加载中...' : '加载更多' }}
-          </button>
+          </el-button>
         </div>
-        <div v-if="!postsMore && posts.length > 0" class="no-more">
-          <span class="no-more-line"></span><span class="no-more-text">已经到底啦</span><span class="no-more-line"></span>
-        </div>
-      </section>
+        <el-divider v-if="!postsMore && posts.length > 0" content-position="center">已经到底啦</el-divider>
+      </el-card>
 
-      <section class="products-section">
+      <el-card shadow="never" class="products-section">
         <h3 class="section-title">{{ isSelf ? '我的商品' : 'TA 的商品' }}</h3>
 
         <div v-if="productsLoading" class="products-loading">
-          <div v-for="i in 4" :key="i" class="skeleton-product"></div>
+          <el-skeleton v-for="i in 4" :key="i" animated :rows="3" class="product-skeleton" />
         </div>
-        <div v-else-if="products.length === 0" class="products-empty">暂无商品</div>
+        <el-empty v-else-if="products.length === 0" description="暂无商品" :image-size="80" class="products-empty" />
         <div v-else class="products-grid">
           <ProductCard v-for="product in products" :key="product.id" :product="product" @click="goToProduct(product.id)" />
         </div>
 
         <div v-if="!productsLoading && productsMore && products.length > 0" class="load-more">
-          <button @click="loadMoreProducts" :disabled="productsLoadingMore" class="load-more-btn">
+          <el-button round @click="loadMoreProducts" :disabled="productsLoadingMore" class="load-more-btn">
             {{ productsLoadingMore ? '加载中...' : '加载更多' }}
-          </button>
+          </el-button>
         </div>
-        <div v-if="!productsMore && products.length > 0" class="no-more">
-          <span class="no-more-line"></span><span class="no-more-text">已经到底啦</span><span class="no-more-line"></span>
-        </div>
-      </section>
+        <el-divider v-if="!productsMore && products.length > 0" content-position="center">已经到底啦</el-divider>
+      </el-card>
     </main>
   </div>
 </template>
@@ -336,15 +327,6 @@ function onAvatarError(e) {
   margin: 0 auto;
 }
 
-.profile-card {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 32px 24px 24px;
-  text-align: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  margin-bottom: 16px;
-}
-
 .profile-avatar {
   width: 80px;
   height: 80px;
@@ -431,54 +413,6 @@ function onAvatarError(e) {
   justify-content: center;
 }
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 32px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s ease;
-}
-
-.chat-btn {
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(16,185,129,0.25);
-}
-
-.chat-btn:active { transform: scale(0.96); }
-
-.follow-btn {
-  background: #F0F2F5;
-  color: #666666;
-  border: 1px solid #DDE1E6;
-}
-
-.follow-btn.followed {
-  background: #E8F4FD;
-  border-color: #B3D8F5;
-  color: #1890FF;
-}
-
-.edit-btn {
-  background: #F0F2F5;
-  color: #666666;
-  border: 1px solid #DDE1E6;
-  width: 100%;
-}
-
-.posts-section {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 20px 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
 .section-title {
   font-size: 16px;
   font-weight: 700;
@@ -486,94 +420,12 @@ function onAvatarError(e) {
   margin: 0 0 16px;
 }
 
-.posts-loading, .posts-empty {
+.posts-loading, .products-loading {
   text-align: center;
-  padding: 32px 0;
-  color: #999999;
-  font-size: 14px;
-}
-
-.skeleton-post {
-  height: 120px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 12px;
-  margin-bottom: 12px;
-}
-
-.loading-state {
-  padding: 40px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-.skeleton-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line {
-  height: 16px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-line.short { width: 120px; }
-.skeleton-line.medium { width: 200px; }
-.skeleton-line.long { width: 280px; }
-
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-.error-state {
-  padding: 80px 32px;
-  text-align: center;
-  color: #999999;
-}
-
-.error-icon { font-size: 64px; display: block; margin-bottom: 16px; }
-
-.retry-btn {
-  margin-top: 16px;
-  padding: 10px 32px;
-  background: var(--color-primary-500, #10b981);
-  color: #fff;
-  border-radius: 4px;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
+  padding: 8px 0;
 }
 
 .load-more { text-align: center; padding: 16px 0 8px; }
-.load-more-btn {
-  background: #F5F7FA;
-  color: #999;
-  padding: 8px 32px;
-  border-radius: 20px;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-}
-.load-more-btn:disabled { opacity: 0.6; }
-
-.no-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px 0;
-  color: #ccc;
-  font-size: 13px;
-}
-.no-more-line { flex: 1; height: 1px; background: #E8ECF0; }
 
 /* 帖子瀑布流布局 - 小红书风格 */
 .posts-list {
@@ -585,21 +437,6 @@ function onAvatarError(e) {
 .posts-list > * {
   break-inside: avoid;
   margin-bottom: 8px;
-}
-
-/* 商品区域 */
-.products-section {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 20px 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-.products-loading, .products-empty {
-  text-align: center;
-  padding: 32px 0;
-  color: #999999;
-  font-size: 14px;
 }
 
 /* 商品瀑布流布局 - 小红书风格 */
@@ -629,12 +466,80 @@ function onAvatarError(e) {
     column-count: 2;
   }
 }
+</style>
 
-.skeleton-product {
-  height: 180px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+<style>
+/* el-card / el-button / el-empty 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.user-profile-page .profile-card.el-card {
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.user-profile-page .profile-card.el-card .el-card__body {
+  padding: 32px 24px 24px;
+  text-align: center;
+}
+
+.user-profile-page .posts-section.el-card,
+.user-profile-page .products-section.el-card {
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.user-profile-page .posts-section.el-card .el-card__body,
+.user-profile-page .products-section.el-card .el-card__body {
+  padding: 20px 16px;
+}
+
+.user-profile-page .chat-btn.el-button {
+  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
+  border: none;
+  box-shadow: 0 4px 12px rgba(16,185,129,0.25);
+}
+
+.user-profile-page .follow-btn.el-button {
+  background: #F0F2F5;
+  color: #666666;
+  border: 1px solid #DDE1E6;
+}
+
+.user-profile-page .follow-btn.el-button.followed {
+  background: #E8F4FD;
+  border-color: #B3D8F5;
+  color: #1890FF;
+}
+
+.user-profile-page .edit-btn.el-button {
+  width: 100%;
+  background: #F0F2F5;
+  color: #666666;
+  border: 1px solid #DDE1E6;
+}
+
+.user-profile-page .load-more-btn.el-button {
+  background: #F5F7FA;
+  color: #999;
+  border: none;
+}
+
+.user-profile-page .post-skeleton,
+.user-profile-page .product-skeleton {
   border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.user-profile-page .error-state,
+.user-profile-page .posts-empty,
+.user-profile-page .products-empty {
+  padding: 40px 16px;
+}
+
+.user-profile-page .profile-skeleton {
+  width: 100%;
+}
+
+.user-profile-page .posts-section .el-divider--horizontal,
+.user-profile-page .products-section .el-divider--horizontal {
+  margin: 16px 0 8px;
 }
 </style>

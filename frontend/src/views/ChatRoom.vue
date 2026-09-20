@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-room">
+  <el-card shadow="never" class="chat-room">
     <header class="chat-header">
       <BackButton />
       <div class="header-info">
@@ -63,12 +63,16 @@
     </main>
 
     <footer class="input-area">
-      <div class="toolbar">
-        <button @click="toggleEmojiPicker" class="tool-btn" :class="{ active: showEmojiPicker }">
+      <div class="input-wrapper">
+        <button
+          @click="toggleEmojiPicker"
+          class="tool-btn"
+          :class="{ active: showEmojiPicker }"
+          aria-label="表情"
+          title="表情"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
         </button>
-      </div>
-      <div class="input-wrapper">
         <textarea ref="inputRef" v-model="newMessage" class="message-input" placeholder="输入消息..." rows="1"
           @input="autoResize" @keydown.enter.exact.prevent="sendMessage"></textarea>
         <button @click="sendMessage" :disabled="!newMessage.trim() || sending" class="send-btn" :class="{ active: newMessage.trim() }">
@@ -81,13 +85,14 @@
         </div>
       </div>
     </footer>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { useNotificationStore } from '../store/notification'
 import { messageApi, wsManager, productApi, userApi } from '../services/api'
 import { useToast } from '../use/useToast'
 import BackButton from '../components/BackButton.vue'
@@ -95,6 +100,7 @@ import BackButton from '../components/BackButton.vue'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 const toast = useToast()
 
 /** 移动端虚拟键盘适配：键盘弹出时将输入区域固定在键盘上方 */
@@ -186,13 +192,14 @@ function handleDocumentClick(event) {
 
 /** 消息轮询定时器 */
 let messagePollTimer = null
+/** 组件是否已卸载：initChat 是异步的，用它拦截 await 结束后对已销毁组件的操作 */
+let disposed = false
 
 onMounted(async () => {
-  await initChat()
-  // 订阅全局 WS 的 chat_message 事件：服务端推送新消息时回调 handleWsMessage
-  // 必须在 onUnmounted 里 off 掉，否则离开聊天页后仍会收到推送造成内存泄漏/重复处理
+  // 先注册订阅、定时器与监听，再执行异步初始化。
+  // 反过来的话，组件若在 await initChat() 期间卸载，onUnmounted 已经以 null 变量执行完，
+  // 随后落地的订阅/定时器/监听不会被清理，造成永久泄漏
   wsManager.on('chat_message', handleWsMessage)
-  nextTick(() => inputRef.value?.focus())
   document.addEventListener('click', handleDocumentClick)
   // 轮询刷新消息（每5秒）。WS 是主通道，轮询是「兜底」补偿丢包/未连上的情况。
   // document.visibilityState === 'visible'：页面切到后台时跳过轮询，省电省流量
@@ -203,9 +210,14 @@ onMounted(async () => {
   }, 5000)
   // 移动端键盘适配
   cleanupKeyboard = setupKeyboardAdapter()
+
+  await initChat()
+  if (disposed) return
+  nextTick(() => inputRef.value?.focus())
 })
 
 onUnmounted(() => {
+  disposed = true
   wsManager.off('chat_message', handleWsMessage)
   document.removeEventListener('click', handleDocumentClick)
   if (messagePollTimer) {
@@ -391,6 +403,8 @@ async function markAsRead() {
   if (!conversationId.value) return
   try {
     await messageApi.markConversationAsRead(conversationId.value)
+    // 同步刷新侧边栏「通知」角标（含私信未读），不必等 30s 轮询
+    notificationStore.fetchChatUnreadCount()
   } catch {}
 }
 
@@ -408,14 +422,26 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 .chat-room {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: var(--color-bg-page);
   position: fixed;
   top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* 收缩左右边界、聚焦正中央：限宽后左右外边距 auto 均分（left/right 均为 0 时生效） */
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--color-bg-page);
   z-index: var(--z-modal);
+  border: none;
+  border-radius: 0;
+}
+
+.chat-room :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
 }
 
 .chat-header {
@@ -701,29 +727,26 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 }
 
 .input-area {
+  /* 作为表情面板的定位基准：面板贴其上沿展开，因此不会被输入框高度变化盖住 */
+  position: relative;
   background: var(--color-bg-primary);
   border-top: 1px solid var(--color-border-light);
   padding: var(--space-2_5) var(--space-4);
   padding-bottom: calc(var(--space-2_5) + env(safe-area-inset-bottom, 0px));
 }
 
-.toolbar {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
 .tool-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-text-secondary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   border: none;
   background: none;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all var(--duration-fast) var(--ease-out);
 }
 
@@ -740,7 +763,7 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 
 .input-wrapper {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-2_5);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-xl);
@@ -804,32 +827,37 @@ function formatTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeSt
 
 .emoji-picker {
   position: absolute;
-  bottom: 80px;
+  /* 贴输入区上沿展开：不遮挡输入框，且随输入区高度自适应（不再用写死的 bottom 值） */
+  bottom: calc(100% + var(--space-2));
   left: var(--space-4);
-  right: var(--space-4);
+  width: min(320px, calc(100% - var(--space-8)));
   background: var(--color-bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-lg);
   z-index: var(--z-dropdown);
 }
 
 .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: var(--space-2);
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-1);
 }
 
 .emoji-item {
-  width: 40px;
-  height: 40px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-out);
+}
+
+.emoji-item:hover {
+  background: var(--color-bg-secondary);
 }
 
 .emoji-item:active {

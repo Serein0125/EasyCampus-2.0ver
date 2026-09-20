@@ -3,6 +3,7 @@ package com.campus.backend.service;
 import com.campus.backend.entity.Notification;
 
 import java.util.List;
+import java.util.Map;
 
 public interface NotificationService {
 
@@ -14,6 +15,12 @@ public interface NotificationService {
 
     /** 获取用户未读通知数 */
     int getUnreadCount(Long userId);
+
+    /** 按类型获取未读通知数（LIKE/COMMENT/FOLLOW），缺省类型为 0 */
+    Map<String, Integer> getUnreadCountByType(Long userId);
+
+    /** 标记用户某一类型的所有通知为已读 */
+    void markTypeAsRead(String type, Long userId);
 
     /** 标记单条通知为已读 */
     void markAsRead(Long id, Long userId);

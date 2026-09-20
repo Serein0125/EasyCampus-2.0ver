@@ -13,15 +13,20 @@
 
     <!-- 类型筛选标签 -->
     <div class="filter-tabs">
-      <button
-        v-for="tab in filterTabs"
-        :key="tab.key"
-        class="filter-tab"
-        :class="{ active: activeFilter === tab.key }"
-        @click="switchFilter(tab.key)"
-      >
-        {{ tab.label }}
-      </button>
+      <el-tabs :model-value="activeFilter" @tab-change="switchFilter">
+        <el-tab-pane
+          v-for="tab in filterTabs"
+          :key="tab.key"
+          :name="tab.key"
+        >
+          <template #label>
+            <span class="filter-tab-label">
+              {{ tab.label }}
+              <span v-if="tabUnread(tab.key) > 0" class="tab-new">new</span>
+            </span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <!-- 加载中 -->
@@ -32,46 +37,50 @@
 
     <!-- 通知列表 -->
     <div v-else-if="notifications.length > 0" class="notification-list">
-      <div
+      <el-card
         v-for="item in notifications"
         :key="item.id"
         class="notification-item"
         :class="{ unread: !item.isRead }"
+        shadow="hover"
+        :body-style="{ padding: '0px' }"
         @click="handleNotificationClick(item)"
       >
-        <!-- 操作者头像 -->
-        <div class="actor-avatar-wrap">
-          <img
-            v-if="item.actorAvatar"
-            :src="item.actorAvatar"
-            class="actor-avatar"
-            @error="handleAvatarError($event)"
-          />
-          <div v-else class="actor-avatar-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
+        <div class="notification-item-inner">
+          <!-- 操作者头像 -->
+          <div class="actor-avatar-wrap">
+            <img
+              v-if="item.actorAvatar"
+              :src="item.actorAvatar"
+              class="actor-avatar"
+              @error="handleAvatarError($event)"
+            />
+            <div v-else class="actor-avatar-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <!-- 类型小图标 -->
+            <span class="type-badge" :class="item.type.toLowerCase()">
+              {{ typeIcon(item.type) }}
+            </span>
           </div>
-          <!-- 类型小图标 -->
-          <span class="type-badge" :class="item.type.toLowerCase()">
-            {{ typeIcon(item.type) }}
-          </span>
-        </div>
 
-        <!-- 通知内容 -->
-        <div class="notification-content">
-          <p class="notification-text">
-            <span class="actor-name">{{ item.actorNickname || '用户' }}</span>
-            <template v-if="item.type === 'CHAT'">：{{ item.content }}</template>
-            <template v-else>{{ item.content }}</template>
-          </p>
-          <span class="notification-time">{{ formatTime(item.createdAt) }}</span>
-        </div>
+          <!-- 通知内容 -->
+          <div class="notification-content">
+            <p class="notification-text">
+              <span class="actor-name">{{ item.actorNickname || '用户' }}</span>
+              <template v-if="item.type === 'CHAT'">：{{ item.content }}</template>
+              <template v-else>{{ item.content }}</template>
+            </p>
+            <span class="notification-time">{{ formatTime(item.createdAt) }}</span>
+          </div>
 
-        <!-- 未读标记 -->
-        <div v-if="!item.isRead" class="unread-dot"></div>
-      </div>
+          <!-- 未读标记 -->
+          <div v-if="!item.isRead" class="unread-dot"></div>
+        </div>
+      </el-card>
 
       <!-- 加载更多 -->
       <div v-if="hasMore" class="load-more">
@@ -82,11 +91,9 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-else class="empty-state">
-      <span class="empty-emoji">🔔</span>
-      <p class="empty-text">{{ activeFilter === 'CHAT' ? '暂无私信' : '暂无通知' }}</p>
+    <el-empty v-else :description="activeFilter === 'CHAT' ? '暂无私信' : '暂无通知'">
       <p class="empty-sub">{{ activeFilter === 'CHAT' ? '有人给你发私信时，会在这里显示' : '有人点赞、评论或关注你时，会在这里显示' }}</p>
-    </div>
+    </el-empty>
 
     <!-- 底部操作栏 -->
     <div v-if="notifications.length > 0 && activeFilter !== 'CHAT'" class="bottom-bar">
@@ -98,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { notificationApi } from '../services/api'
 import { useNotificationStore } from '../store/notification'
@@ -125,12 +132,56 @@ const filterTabs = [
   { key: 'CHAT', label: '私信' }
 ]
 
+/** 各栏目未读数（由后端按类型 GROUP BY 聚合；CHAT 为聊天会话未读总数） */
+const unreadByType = reactive<Record<string, number>>({
+  LIKE: 0,
+  COMMENT: 0,
+  FOLLOW: 0,
+  CHAT: 0
+})
+/** 「全部」角标 = 四类未读之和 */
+const totalUnread = computed(
+  () => unreadByType.LIKE + unreadByType.COMMENT + unreadByType.FOLLOW + unreadByType.CHAT
+)
+/** 供模板读取各栏目未读数 */
+function tabUnread(key: string) {
+  return key === 'ALL' ? totalUnread.value : (unreadByType[key] || 0)
+}
+
+/** 拉取各栏目未读数（进入页面、已读操作后刷新） */
+async function fetchUnreadCounts() {
+  try {
+    const res = await notificationApi.getUnreadCountByType()
+    if (res.code === 200 && res.data) {
+      unreadByType.LIKE = Number(res.data.LIKE) || 0
+      unreadByType.COMMENT = Number(res.data.COMMENT) || 0
+      unreadByType.FOLLOW = Number(res.data.FOLLOW) || 0
+      unreadByType.CHAT = Number(res.data.CHAT) || 0
+    }
+  } catch {
+    // 静默失败，不阻塞列表展示
+  }
+}
+
 /** 切换筛选类型 */
-function switchFilter(type) {
+async function switchFilter(type) {
   if (activeFilter.value === type) return
   activeFilter.value = type
   currentPage.value = 1
   notifications.value = []
+
+  // 进入点赞/评论/关注栏目即视为已读（私信以进入具体会话为准，不在此清除）
+  if (type !== 'ALL' && type !== 'CHAT' && unreadByType[type] > 0) {
+    unreadByType[type] = 0
+    try {
+      await notificationApi.markTypeAsRead(type)
+      // 同步侧边栏「通知」总数角标
+      notificationStore.fetchNotificationUnreadCount()
+    } catch {
+      // 失败则下次轮询/重进页面时修正
+    }
+  }
+
   fetchNotifications()
 }
 
@@ -207,6 +258,8 @@ async function handleNotificationClick(item) {
     try {
       await notificationApi.markAsRead(item.id)
       item.isRead = true
+      // 同步该栏目角标与侧边栏总数
+      if (unreadByType[item.type] > 0) unreadByType[item.type]--
       notificationStore.decrementNotificationCount()
     } catch {
       // 静默失败
@@ -229,6 +282,10 @@ async function handleMarkAllRead() {
   try {
     await notificationApi.markAllAsRead()
     notifications.value.forEach(n => n.isRead = true)
+    // 系统通知三类角标清零（私信不在全部已读范围内，保持不变）
+    unreadByType.LIKE = 0
+    unreadByType.COMMENT = 0
+    unreadByType.FOLLOW = 0
     notificationStore.clearNotificationCount()
     toast.showToast('已全部标记为已读')
   } catch {
@@ -244,6 +301,9 @@ async function handleClearAll() {
   try {
     await notificationApi.clearAll()
     notifications.value = []
+    unreadByType.LIKE = 0
+    unreadByType.COMMENT = 0
+    unreadByType.FOLLOW = 0
     notificationStore.clearNotificationCount()
     toast.showToast('已清空所有通知')
   } catch {
@@ -286,6 +346,7 @@ function handleAvatarError(event) {
 
 onMounted(() => {
   fetchNotifications()
+  fetchUnreadCounts()
 })
 
 onUnmounted(() => {
@@ -342,31 +403,38 @@ onUnmounted(() => {
 
 /* 筛选标签 */
 .filter-tabs {
-  display: flex;
-  gap: 0;
   padding: 0 16px;
   background: #fff;
   border-bottom: 1px solid var(--color-border-light, #e5e7eb);
-  overflow-x: auto;
 }
 
-.filter-tab {
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #6b7280);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.2s, border-color 0.2s;
+.filter-tabs :deep(.el-tabs__header) {
+  margin: 0;
 }
 
-.filter-tab.active {
-  color: var(--color-primary-600, #059669);
-  font-weight: 600;
-  border-bottom-color: var(--color-primary-500, #10b981);
+/* 栏目名 + new 角标（slot 内容，scoped 可直接命中） */
+.filter-tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tab-new {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-rose-500, #f43f5e);
+  text-transform: uppercase;
+  animation: tab-new-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tab-new-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-new { animation: none; }
 }
 
 /* 加载状态 */
@@ -399,22 +467,19 @@ onUnmounted(() => {
 }
 
 .notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--color-border-light, #e5e7eb);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.notification-item:active {
-  background: var(--color-gray-50, #f9fafb);
+  margin-bottom: 10px;
 }
 
 .notification-item.unread {
   background: var(--color-primary-50, #ecfdf5);
+}
+
+.notification-item-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
 }
 
 /* 头像区域 */
@@ -511,26 +576,6 @@ onUnmounted(() => {
 }
 
 /* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-}
-
-.empty-emoji {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.empty-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary, #111827);
-  margin: 0 0 8px;
-}
-
 .empty-sub {
   font-size: 14px;
   color: var(--color-text-tertiary, #9ca3af);

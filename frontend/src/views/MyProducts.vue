@@ -10,22 +10,20 @@
     </header>
 
     <div class="tab-bar">
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'products' }"
-        @click="switchTab('products')"
-      >
-        商品
-        <span v-if="products.length > 0" class="tab-count">{{ products.length }}</span>
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'posts' }"
-        @click="switchTab('posts')"
-      >
-        帖子
-        <span v-if="posts.length > 0" class="tab-count">{{ posts.length }}</span>
-      </button>
+      <el-tabs v-model="activeTab" @tab-change="switchTab">
+        <el-tab-pane name="products">
+          <template #label>
+            商品
+            <span v-if="products.length > 0" class="tab-count">{{ products.length }}</span>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane name="posts">
+          <template #label>
+            帖子
+            <span v-if="posts.length > 0" class="tab-count">{{ posts.length }}</span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <main class="main-content">
@@ -42,105 +40,111 @@
 
       <template v-else>
         <div v-if="activeTab === 'products'">
-          <div v-if="products.length === 0" class="empty-state">
-            <div class="empty-icon">📦</div>
-            <h3>还没有发布商品</h3>
-            <p>快去发布你的闲置物品吧</p>
-            <router-link to="/products/create" class="publish-btn">发布商品</router-link>
-          </div>
+          <el-empty v-if="products.length === 0" description="还没有发布商品">
+            <p class="empty-sub">快去发布你的闲置物品吧</p>
+            <router-link to="/products/create">
+              <el-button type="primary" round>发布商品</el-button>
+            </router-link>
+          </el-empty>
 
           <div v-else class="item-list">
-            <div
+            <el-card
               v-for="product in products"
               :key="'p-' + product.id"
-              class="product-card"
+              shadow="hover"
+              :body-style="{ padding: '0px' }"
               @click="goToProductDetail(product.id)"
             >
-              <div class="product-image">
-                <img
-                  v-if="getProductImage(product)"
-                  :src="getProductImage(product)"
-                  alt=""
-                  loading="lazy"
-                />
-                <div v-else class="image-placeholder">
-                  <span>{{ getCategoryEmoji(product.categoryId) }}</span>
+              <div class="product-card">
+                <div class="product-image">
+                  <img
+                    v-if="getProductImage(product)"
+                    :src="getProductImage(product)"
+                    alt=""
+                    loading="lazy"
+                  />
+                  <div v-else class="image-placeholder">
+                    <span>{{ getCategoryEmoji(product.categoryId) }}</span>
+                  </div>
+                  <div class="status-badge" :class="getStatusClass(product.status)">
+                    {{ getStatusText(product.status) }}
+                  </div>
                 </div>
-                <div class="status-badge" :class="getStatusClass(product.status)">
-                  {{ getStatusText(product.status) }}
+                <div class="product-info">
+                  <h3 class="product-name">{{ product.name }}</h3>
+                  <div class="product-meta">
+                    <span class="product-price">¥{{ product.price }}</span>
+                    <span class="product-condition">{{ product.conditionText }}</span>
+                  </div>
+                  <div class="product-stats">
+                    <span>👁 {{ product.viewCount || 0 }}</span>
+                    <span>❤️ {{ product.likeCount || 0 }}</span>
+                    <span class="product-time">{{ formatTime(product.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="item-actions" @click.stop>
+                  <button
+                    v-if="product.status === 1"
+                    @click="toggleProductStatus(product.id, 0)"
+                    class="action-btn off-btn"
+                  >下架</button>
+                  <button
+                    v-if="product.status === 0"
+                    @click="toggleProductStatus(product.id, 1)"
+                    class="action-btn on-btn"
+                  >上架</button>
+                  <button
+                    @click="handleDeleteProduct(product)"
+                    class="action-btn delete-btn"
+                  >删除</button>
                 </div>
               </div>
-              <div class="product-info">
-                <h3 class="product-name">{{ product.name }}</h3>
-                <div class="product-meta">
-                  <span class="product-price">¥{{ product.price }}</span>
-                  <span class="product-condition">{{ product.conditionText }}</span>
-                </div>
-                <div class="product-stats">
-                  <span>👁 {{ product.viewCount || 0 }}</span>
-                  <span>❤️ {{ product.likeCount || 0 }}</span>
-                  <span class="product-time">{{ formatTime(product.createdAt) }}</span>
-                </div>
-              </div>
-              <div class="item-actions" @click.stop>
-                <button
-                  v-if="product.status === 1"
-                  @click="toggleProductStatus(product.id, 0)"
-                  class="action-btn off-btn"
-                >下架</button>
-                <button
-                  v-if="product.status === 0"
-                  @click="toggleProductStatus(product.id, 1)"
-                  class="action-btn on-btn"
-                >上架</button>
-                <button
-                  @click="handleDeleteProduct(product)"
-                  class="action-btn delete-btn"
-                >删除</button>
-              </div>
-            </div>
+            </el-card>
           </div>
         </div>
 
         <div v-if="activeTab === 'posts'">
-          <div v-if="posts.length === 0" class="empty-state">
-            <div class="empty-icon">📝</div>
-            <h3>还没有发布帖子</h3>
-            <p>分享你的校园生活动态</p>
-            <router-link to="/community/posts/create" class="publish-btn">发布帖子</router-link>
-          </div>
+          <el-empty v-if="posts.length === 0" description="还没有发布帖子">
+            <p class="empty-sub">分享你的校园生活动态</p>
+            <router-link to="/community/posts/create">
+              <el-button type="primary" round>发布帖子</el-button>
+            </router-link>
+          </el-empty>
 
           <div v-else class="item-list">
-            <div
+            <el-card
               v-for="post in posts"
               :key="'post-' + post.id"
-              class="post-card"
+              shadow="hover"
+              :body-style="{ padding: '0px' }"
               @click="goToPostDetail(post.id)"
             >
-              <div class="post-cover" v-if="getPostCover(post)">
-                <img :src="getPostCover(post)" alt="" loading="lazy" />
-              </div>
-              <div class="post-info">
-                <div class="post-type-badge" v-if="post.postType === 'ACTIVITY'">活动</div>
-                <h3 class="post-title">{{ post.title }}</h3>
-                <p class="post-summary" v-if="post.summary || post.content">{{ getPostSummary(post) }}</p>
-                <div class="post-tags" v-if="getPostTags(post).length">
-                  <span v-for="tag in getPostTags(post)" :key="tag" class="tag-hashtag">{{ tag }}</span>
+              <div class="post-card">
+                <div class="post-cover" v-if="getPostCover(post)">
+                  <img :src="getPostCover(post)" alt="" loading="lazy" />
                 </div>
-                <div class="post-stats">
-                  <span>👁 {{ post.viewCount || 0 }}</span>
-                  <span>❤️ {{ post.likeCount || 0 }}</span>
-                  <span>💬 {{ post.commentCount || 0 }}</span>
-                  <span class="post-time">{{ formatTime(post.createdAt) }}</span>
+                <div class="post-info">
+                  <div class="post-type-badge" v-if="post.postType === 'ACTIVITY'">活动</div>
+                  <h3 class="post-title">{{ post.title }}</h3>
+                  <p class="post-summary" v-if="post.summary || post.content">{{ getPostSummary(post) }}</p>
+                  <div class="post-tags" v-if="getPostTags(post).length">
+                    <span v-for="tag in getPostTags(post)" :key="tag" class="tag-hashtag">{{ tag }}</span>
+                  </div>
+                  <div class="post-stats">
+                    <span>👁 {{ post.viewCount || 0 }}</span>
+                    <span>❤️ {{ post.likeCount || 0 }}</span>
+                    <span>💬 {{ post.commentCount || 0 }}</span>
+                    <span class="post-time">{{ formatTime(post.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="item-actions" @click.stop>
+                  <button
+                    @click="handleDeletePost(post)"
+                    class="action-btn delete-btn"
+                  >删除</button>
                 </div>
               </div>
-              <div class="item-actions" @click.stop>
-                <button
-                  @click="handleDeletePost(post)"
-                  class="action-btn delete-btn"
-                >删除</button>
-              </div>
-            </div>
+            </el-card>
           </div>
         </div>
       </template>
@@ -450,38 +454,10 @@ onMounted(() => {
   display: flex;
   background: #fff;
   padding: 0 16px;
-  border-bottom: 1px solid #f0f0f0;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 14px 0;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 500;
-  color: #999;
-  border: none;
-  background: none;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.25s ease;
-}
-
-.tab-btn.active {
-  color: var(--color-primary-500, #10b981);
-  font-weight: 700;
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 3px;
-  background: var(--color-primary-500, #10b981);
-  border-radius: 2px;
+.tab-bar :deep(.el-tabs__header) {
+  margin: 0;
 }
 
 .tab-count {
@@ -497,11 +473,6 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 600;
   border-radius: 9px;
-}
-
-.tab-btn.active .tab-count {
-  background: #FFF2E6;
-  color: var(--color-primary-500, #10b981);
 }
 
 .main-content {
@@ -547,24 +518,10 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state h3 { font-size: 18px; color: #333; margin: 0 0 8px; }
-.empty-state p { color: #999; margin-bottom: 20px; }
-
-.publish-btn {
-  display: inline-block;
-  padding: 12px 32px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-  text-decoration: none;
-  border-radius: 24px;
-  font-size: 15px;
-  font-weight: 600;
+.empty-sub {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #999;
 }
 
 .item-list {
@@ -577,11 +534,7 @@ onMounted(() => {
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .product-card:active {
@@ -684,11 +637,7 @@ onMounted(() => {
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .post-card:active {

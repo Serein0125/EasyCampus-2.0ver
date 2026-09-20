@@ -11,7 +11,9 @@
     <div v-else class="comment-list">
       <div v-for="comment in comments" :key="comment.id" class="comment-item" :class="{ 'has-replies': comment.replies?.length }">
         <div class="comment-main">
-          <img :src="comment.userAvatar || defaultAvatar" class="comment-avatar" @error="onAvatarError" />
+          <el-avatar :size="32" :src="comment.userAvatar || undefined" class="comment-avatar">
+            <svg viewBox="0 0 40 40" width="20" height="20"><circle cx="20" cy="20" r="20" fill="#e5e7eb"/><circle cx="20" cy="15" r="8" fill="#d1d5db"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#d1d5db"/></svg>
+          </el-avatar>
           <div class="comment-body">
             <div class="comment-header">
               <span class="comment-user">{{ comment.userName || '匿名用户' }}</span>
@@ -28,7 +30,9 @@
 
         <div v-if="comment.replies?.length" class="replies">
           <div v-for="reply in comment.replies" :key="reply.id" class="reply-item">
-            <img :src="reply.userAvatar || defaultAvatar" class="reply-avatar" @error="onAvatarError" />
+            <el-avatar :size="28" :src="reply.userAvatar || undefined" class="reply-avatar">
+              <svg viewBox="0 0 40 40" width="18" height="18"><circle cx="20" cy="20" r="20" fill="#e5e7eb"/><circle cx="20" cy="15" r="8" fill="#d1d5db"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#d1d5db"/></svg>
+            </el-avatar>
             <div class="reply-body">
               <div class="reply-header">
                 <span class="reply-user">{{ reply.userName || '匿名用户' }}</span>
@@ -46,9 +50,15 @@
     </div>
 
     <div v-if="isAuthenticated" class="comment-input-bar">
-      <input v-model="newComment" :placeholder="replyTo ? '回复 ' + replyTo.userName + '...' : '写下你的评论...'" @keyup.enter="submitComment" maxlength="500" />
-      <button :disabled="!newComment.trim()" @click="submitComment">发送</button>
-      <button v-if="replyTo" class="cancel-reply" @click="cancelReply">取消</button>
+      <el-input
+        v-model="newComment"
+        :placeholder="replyTo ? '回复 ' + replyTo.userName + '...' : '写下你的评论...'"
+        maxlength="500"
+        @keyup.enter="submitComment"
+        class="comment-input"
+      />
+      <el-button type="primary" round :disabled="!newComment.trim()" @click="submitComment">发送</el-button>
+      <el-button v-if="replyTo" round @click="cancelReply">取消</el-button>
     </div>
     <div v-else class="login-hint">
       <router-link to="/login">登录</router-link> 后参与评论
@@ -78,7 +88,6 @@ const totalCount = ref(0)
 const loading = ref(false)
 const newComment = ref('')
 const replyTo = ref<any>(null)
-const defaultAvatar = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#eee"/><circle cx="20" cy="15" r="8" fill="#ccc"/><ellipse cx="20" cy="35" rx="12" ry="8" fill="#ccc"/></svg>')
 
 const currentUserId = computed(() => currentUser.value?.id)
 
@@ -105,8 +114,6 @@ function formatTime(dateStr) {
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
   return date.toLocaleDateString()
 }
-
-function onAvatarError(e) { e.target.src = defaultAvatar }
 
 function startReply(comment) {
   replyTo.value = comment
@@ -178,8 +185,9 @@ async function deleteComment(commentId, parentComment) {
   }
 }
 
-function confirmDelete(commentId, parentComment?) {
-  if (window.confirm('确定要删除这条评论吗？删除后不可恢复。')) {
+async function confirmDelete(commentId, parentComment?) {
+  const ok = await toast.showConfirm('确定要删除这条评论吗？删除后不可恢复。')
+  if (ok) {
     deleteComment(commentId, parentComment)
   }
 }
@@ -232,10 +240,6 @@ async function loadComments() {
   gap: 10px;
 }
 .comment-avatar, .reply-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
   background: #eee;
   flex-shrink: 0;
 }
@@ -294,32 +298,14 @@ async function loadComments() {
 .comment-input-bar {
   display: flex;
   gap: 8px;
+  align-items: center;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #f0f0f0;
 }
-.comment-input-bar input {
+.comment-input {
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #eee;
-  border-radius: 20px;
-  font-size: 14px;
-  outline: none;
-  background: #f8f8f8;
 }
-.comment-input-bar input:focus { border-color: var(--color-primary-500, #10b981); background: #fff; }
-.comment-input-bar button {
-  padding: 8px 18px;
-  border-radius: 20px;
-  border: none;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), #ff9500);
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.comment-input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
-.cancel-reply { background: #f0f0f0 !important; color: #666 !important; }
 .login-hint {
   text-align: center;
   padding: 16px;

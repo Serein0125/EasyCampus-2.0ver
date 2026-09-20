@@ -6,7 +6,7 @@ import { useAuthStore } from './auth'
 /**
  * 通知 Store（Pinia setup store）
  * - state: notificationUnreadCount（系统通知未读）/ chatUnreadCount（聊天未读）
- * - getter: totalUnreadCount / hasUnread（用于头像红点、TabBar 角标）
+ * - getter: totalUnreadCount / hasUnread（用于头像红点、顶部导航角标）
  * - 未读数为临时状态，每次登录/轮询重新拉取，不做持久化
  */
 export const useNotificationPiniaStore = defineStore('notification', () => {

@@ -1,54 +1,54 @@
 <template>
-  <transition name="sheet-fade">
-    <div v-if="visible" class="action-sheet-overlay" @click.self="emit('close')">
-      <transition name="sheet-slide">
-        <div v-if="visible" class="action-sheet">
-          <div class="sheet-header">
-            <span class="sheet-title">选择发布类型</span>
-          </div>
-          <div class="sheet-options">
-            <button @click="handlePublish('post')" class="sheet-option">
-              <span class="option-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </span>
-              <div class="option-info">
-                <span class="option-title">发布帖子</span>
-                <span class="option-desc">分享想法、提问或讨论</span>
-              </div>
-              <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                <polyline points="9,18 15,12 9,6"/>
-              </svg>
-            </button>
-            <button @click="handlePublish('product')" class="sheet-option">
-              <span class="option-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                  <line x1="12" y1="22.08" x2="12" y2="12"/>
-                </svg>
-              </span>
-              <div class="option-info">
-                <span class="option-title">发布交易</span>
-                <span class="option-desc">出售闲置物品</span>
-              </div>
-              <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                <polyline points="9,18 15,12 9,6"/>
-              </svg>
-            </button>
-          </div>
-          <button @click="emit('close')" class="sheet-cancel">取消</button>
+  <el-dialog
+    v-model="dialogVisible"
+    title="选择发布类型"
+    width="420px"
+    align-center
+    class="publish-action-dialog"
+  >
+    <div class="sheet-options">
+      <button @click="handlePublish('post')" class="sheet-option">
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </span>
+        <div class="option-info">
+          <span class="option-title">发布帖子</span>
+          <span class="option-desc">分享想法、提问或讨论</span>
         </div>
-      </transition>
+        <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <polyline points="9,18 15,12 9,6"/>
+        </svg>
+      </button>
+      <button @click="handlePublish('product')" class="sheet-option">
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </span>
+        <div class="option-info">
+          <span class="option-title">发布交易</span>
+          <span class="option-desc">出售闲置物品</span>
+        </div>
+        <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <polyline points="9,18 15,12 9,6"/>
+        </svg>
+      </button>
     </div>
-  </transition>
+    <template #footer>
+      <el-button round @click="emit('close')">取消</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-defineProps({
+const props = defineProps({
   visible: {
     type: Boolean,
     default: false
@@ -57,6 +57,12 @@ defineProps({
 
 const emit = defineEmits(['close'])
 const router = useRouter()
+
+// el-dialog 的 v-model：关闭（遮罩点击/取消）时向父级抛出 close
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (v: boolean) => { if (!v) emit('close') }
+})
 
 function handlePublish(type) {
   emit('close')
@@ -69,42 +75,10 @@ function handlePublish(type) {
 </script>
 
 <style scoped>
-.action-sheet-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.action-sheet {
-  width: 100%;
-  max-width: 500px;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
-  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 0 8px;
-}
-
-.sheet-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #999;
-}
-
 .sheet-options {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 8px;
 }
 
 .sheet-option {
@@ -158,41 +132,5 @@ function handlePublish(type) {
 .option-arrow {
   color: #ccc;
   flex-shrink: 0;
-}
-
-.sheet-cancel {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  background: #f5f5f5;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 500;
-  color: #666;
-  cursor: pointer;
-}
-
-.sheet-cancel:active {
-  background: #e8e8e8;
-}
-
-.sheet-fade-enter-active,
-.sheet-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.sheet-fade-enter-from,
-.sheet-fade-leave-to {
-  opacity: 0;
-}
-
-.sheet-slide-enter-active,
-.sheet-slide-leave-active {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sheet-slide-enter-from,
-.sheet-slide-leave-to {
-  transform: translateY(100%);
 }
 </style>

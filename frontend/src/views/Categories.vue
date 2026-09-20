@@ -21,45 +21,49 @@
         <button @click="loadCategories" class="retry-btn">重试</button>
       </div>
 
-      <div v-else-if="categories.length === 0" class="empty-state">
-        <div class="empty-icon">📂</div>
-        <h3>暂无分类</h3>
-        <p>还没有创建任何商品分类</p>
-      </div>
+      <el-empty v-else-if="categories.length === 0" description="暂无分类">
+        <p class="empty-sub">还没有创建任何商品分类</p>
+      </el-empty>
 
       <div v-else>
-        <div class="stats-bar">
-          <div class="stat-item">
-            <span class="stat-value">{{ categories.length }}</span>
-            <span class="stat-label">个分类</span>
+        <el-card class="stats-bar" shadow="never" :body-style="{ padding: '16px' }">
+          <div class="stats-bar-inner">
+            <div class="stat-item">
+              <span class="stat-value">{{ categories.length }}</span>
+              <span class="stat-label">个分类</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-value">{{ totalProducts }}</span>
+              <span class="stat-label">件商品</span>
+            </div>
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value">{{ totalProducts }}</span>
-            <span class="stat-label">件商品</span>
-          </div>
-        </div>
+        </el-card>
 
         <div class="category-list">
-          <div
+          <el-card
             v-for="category in categoriesWithCount"
             :key="category.id"
             class="category-card"
+            shadow="hover"
+            :body-style="{ padding: '0px' }"
             @click="goToCategory(category.id)"
           >
-            <div class="category-icon">{{ getCategoryIcon(category) }}</div>
-            <div class="category-info">
-              <div class="category-name">{{ category.name }}</div>
-              <div class="category-desc">{{ category.description || '暂无描述' }}</div>
+            <div class="category-card-inner">
+              <div class="category-icon">{{ getCategoryIcon(category) }}</div>
+              <div class="category-info">
+                <div class="category-name">{{ category.name }}</div>
+                <div class="category-desc">{{ category.description || '暂无描述' }}</div>
+              </div>
+              <div class="category-count">
+                <span class="count-num">{{ category.productCount || 0 }}</span>
+                <span class="count-label">件</span>
+              </div>
+              <svg class="arrow-right" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                <polyline points="9,18 15,12 9,6"/>
+              </svg>
             </div>
-            <div class="category-count">
-              <span class="count-num">{{ category.productCount || 0 }}</span>
-              <span class="count-label">件</span>
-            </div>
-            <svg class="arrow-right" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-              <polyline points="9,18 15,12 9,6"/>
-            </svg>
-          </div>
+          </el-card>
         </div>
 
         <div v-if="categoryTree.length > 0" class="sub-categories-section">
@@ -70,16 +74,20 @@
             class="parent-group"
           >
             <div v-if="parent.children && parent.children.length > 0" class="sub-list">
-              <div
+              <el-card
                 v-for="child in parent.children"
                 :key="child.id"
                 class="sub-category-card"
+                shadow="hover"
+                :body-style="{ padding: '0px' }"
                 @click="goToCategory(child.id)"
               >
-                <span class="sub-icon">{{ getCategoryIcon(child) }}</span>
-                <span class="sub-name">{{ child.name }}</span>
-                <span class="sub-count">{{ getProductCountForCategory(child.id) }}</span>
-              </div>
+                <div class="sub-category-inner">
+                  <span class="sub-icon">{{ getCategoryIcon(child) }}</span>
+                  <span class="sub-name">{{ child.name }}</span>
+                  <span class="sub-count">{{ getProductCountForCategory(child.id) }}</span>
+                </div>
+              </el-card>
             </div>
           </div>
         </div>
@@ -264,36 +272,21 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 8px;
-}
-
-.empty-state p {
+.empty-sub {
+  margin: 0;
+  font-size: 14px;
   color: #999;
 }
 
 .stats-bar {
+  margin-bottom: 12px;
+}
+
+.stats-bar-inner {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
-  background: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .stat-item {
@@ -325,21 +318,12 @@ onMounted(() => {
   gap: 8px;
 }
 
-.category-card {
+.category-card-inner {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.category-card:active {
-  transform: scale(0.98);
-  background-color: #fafafa;
 }
 
 .category-icon {
@@ -419,22 +403,14 @@ onMounted(() => {
   gap: 8px;
 }
 
-.sub-category-card {
+.sub-category-inner {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: #fff;
-  border-radius: 20px;
   font-size: 14px;
   color: #333;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.sub-category-card:active {
-  background-color: #FFF7E6;
 }
 
 .sub-icon {

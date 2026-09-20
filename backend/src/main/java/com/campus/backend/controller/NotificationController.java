@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +74,23 @@ public class NotificationController {
         Long userId = SecurityUtils.getCurrentUserId();
         int count = notificationService.getUnreadCount(userId);
         return Result.success(Map.of("count", count));
+    }
+
+    /** 按类型获取未读数（LIKE/COMMENT/FOLLOW 走通知表聚合，CHAT 取聊天会话未读总数） */
+    @GetMapping("/unread/count-by-type")
+    public Result<Map<String, Object>> getUnreadCountByType() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Map<String, Object> result = new HashMap<>(notificationService.getUnreadCountByType(userId));
+        result.put("CHAT", chatService.getUnreadCount(userId));
+        return Result.success(result);
+    }
+
+    /** 标记某一类型的所有通知为已读（进入该栏目时调用） */
+    @PutMapping("/read/type/{type}")
+    public Result<Void> markTypeAsRead(@PathVariable String type) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        notificationService.markTypeAsRead(type, userId);
+        return Result.success(null);
     }
 
     /** 标记单条通知为已读 */

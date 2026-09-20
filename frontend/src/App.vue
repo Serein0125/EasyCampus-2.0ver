@@ -1,54 +1,58 @@
 <template>
-  <!-- app-root 作为整个应用的挂载根节点，背景色与最小高度在这里统一控制 -->
-  <div id="app" class="app-root">
-    <!-- ToastProvider 包裹整棵组件树，在其内部通过 provide() 注入全局 toast 能力，
-        任何子组件用 useToast() 即可调用 showToast/showConfirm，无需层层透传 props -->
-    <ToastProvider>
-      <!-- 顶部导航栏：只在「需要显示 TabBar」的路由（首页/商品/社区等）渲染 -->
-      <AppHeader v-if="showAppHeader" @toggle-sidebar="showSideMenu = !showSideMenu" />
-      
-      <!-- 侧边抽屉菜单，受控显隐（v-if 级别由组件内部控制，这里只传状态） -->
-      <SideMenu :visible="showSideMenu" @close="showSideMenu = false" />
+  <!-- ElConfigProvider：给 Element Plus 组件注入中文语言包（确认框、校验提示等文案） -->
+  <el-config-provider :locale="zhCn">
+    <!-- app-root 作为整个应用的挂载根节点，背景色与最小高度在这里统一控制 -->
+    <div id="app" class="app-root">
+    <!-- 顶部导航栏：只在「主 tab 页」（路由 meta.showHeader=true）渲染 -->
+    <AppHeader v-if="showAppHeader" @toggle-sidebar="showSideMenu = !showSideMenu" />
 
-      <main class="main-content" :class="{ 'no-header': !showAppHeader }">
-        <div class="content-wrapper">
-          <!-- router-view 用作用域插槽拿到当前路由组件与路由对象，
-              再配合 <transition> 实现页面切换动画：
-              - 动画名取自路由 meta.transition（如详情页用 'slide' 左右滑入），缺省用 'page' 淡入淡出
-              - mode="out-in" 保证先离开再进入，避免两个页面同时存在重叠
-              - :key 绑定 path，路由变化时强制重新挂载组件，触发过渡动画 -->
-          <router-view v-slot="{ Component, route: currentRoute }">
-            <transition :name="currentRoute.meta.transition || 'page'" mode="out-in">
-              <component :is="Component" :key="currentRoute.path" />
-            </transition>
-          </router-view>
-        </div>
-      </main>
+    <!-- 侧边抽屉菜单，受控显隐（v-if 级别由组件内部控制，这里只传状态） -->
+    <SideMenu :visible="showSideMenu" @close="showSideMenu = false" />
 
-      <!-- 底部 TabBar，CSS 默认 display:none，仅在 ≤768px 移动端显示（见样式区 .mobile-navbar） -->
-      <NavBar class="mobile-navbar" />
-    </ToastProvider>
-  </div>
+    <main class="main-content" :class="{ 'no-header': !showAppHeader }">
+      <!-- is-full-bleed：登录页等整屏页面解除 max-width 限制（用 max-width:none 而非 100vw，避免滚动条宽度造成横向溢出） -->
+      <div class="content-wrapper" :class="{ 'is-full-bleed': isFullBleed }">
+        <!-- router-view 用作用域插槽拿到当前路由组件与路由对象，
+            再配合 <transition> 实现页面切换动画：
+            - 动画名取自路由 meta.transition（如详情页用 'slide' 左右滑入），缺省用 'page' 淡入淡出
+            - mode="out-in" 保证先离开再进入，避免两个页面同时存在重叠
+            - :key 绑定 path，路由变化时强制重新挂载组件，触发过渡动画 -->
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <transition :name="currentRoute.meta.transition || 'page'" mode="out-in">
+            <component :is="Component" :key="currentRoute.path" />
+          </transition>
+        </router-view>
+      </div>
+    </main>
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch, ref } from 'vue'
+import { computed, onUnmounted, watch, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useAuthStore } from './store/auth'
 import { useNotificationStore } from './store/notification'
 import { wsManager } from './services/api'
-import NavBar from './components/NavBar.vue'
 import AppHeader from './components/AppHeader.vue'
 import SideMenu from './components/SideMenu.vue'
-import ToastProvider from './components/ToastProvider.vue'
 
 const route = useRoute()
 const { isAuthenticated } = useAuthStore()
 const notificationStore = useNotificationStore()
 const showSideMenu = ref(false)
 
-// 顶部导航栏只在「主 tab 页」显示，依据路由 meta.showTabBar 判断
-const showAppHeader = computed(() => route.meta.showTabBar === true)
+// 顶部导航栏只在「主 tab 页」显示，依据路由 meta.showHeader 判断
+const showAppHeader = computed(() => route.meta.showHeader === true)
+
+// 整屏页面（如登录页）解除内容容器的最大宽度限制
+const isFullBleed = computed(() => route.meta.fullBleed === true)
+
+// chat_message 的固定回调引用：off/on 需要同一个函数引用才能正确解绑
+function handleChatMessage() {
+  notificationStore.fetchChatUnreadCount()
+}
 
 // 初始化 WebSocket：仅在已登录、且连接未建立时建立长连接。
 // WS 全局单例（wsManager）在 services/api.ts 中创建，整个应用共享一条连接。
@@ -58,12 +62,11 @@ function initWebSocket() {
     if (token && !wsManager.isConnected) {
       wsManager.connect(token)
 
-      // 订阅服务端推送的 chat_message 事件：收到新消息就刷新角标未读数
-      // 注意：这里没有在 onUnmounted 里 off，因为 App.vue 与应用同生命周期，
-      // 全局监听随应用销毁一起结束；页面级监听（如 ChatRoom）才需要单独 off
-      wsManager.on('chat_message', () => {
-        notificationStore.fetchChatUnreadCount()
-      })
+      // 订阅服务端推送的 chat_message 事件：收到新消息就刷新角标未读数。
+      // 先 off 再 on：disconnect() 不会清空 listeners，多次登录会让监听累积，
+      // 导致每条消息触发多次未读数请求。App.vue 与应用同生命周期，无需在卸载时 off。
+      wsManager.off('chat_message', handleChatMessage)
+      wsManager.on('chat_message', handleChatMessage)
     }
   }
 }
@@ -85,20 +88,8 @@ watch(
   { immediate: true }
 )
 
-onMounted(() => {
-  // 动态注入 viewport meta：禁止缩放 + viewport-fit=cover（适配刘海屏安全区）
-  // 这种「运行时改 head」常见于需要根据环境定制移动端 viewport 的场景
-  const viewport = document.querySelector('meta[name=viewport]')
-  if (!viewport) {
-    const meta = document.createElement('meta')
-    meta.name = 'viewport'
-    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
-    document.head.appendChild(meta)
-  }
-
-  initWebSocket()
-})
-
+// 上面 watch(isAuthenticated, ..., { immediate: true }) 已覆盖首次挂载，
+// 这里不再重复调用 initWebSocket，否则同一帧内会注册两次 chat_message 监听
 onUnmounted(() => {
   // App.vue 一般不会卸载，这里属于防御性清理，避免 HMR/SPA 重建时残留定时器
   notificationStore.stopPolling()
@@ -129,6 +120,10 @@ onUnmounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+}
+
+.content-wrapper.is-full-bleed {
+  max-width: none;
 }
 
 .page-enter-active {
@@ -168,40 +163,8 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-.mobile-navbar {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding-top: 52px;
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .main-content.no-header {
-    padding-top: 0;
-  }
-
-  .mobile-navbar {
-    display: block;
-  }
-}
-
 * {
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-}
-
-body {
-  -webkit-user-select: none;
-  user-select: none;
-  overscroll-behavior-y: contain;
-}
-
-input,
-textarea {
-  -webkit-user-select: auto;
-  user-select: auto;
 }
 
 ::-webkit-scrollbar {
@@ -247,17 +210,5 @@ textarea,
 select {
   font-family: inherit;
   font-size: inherit;
-}
-
-@media (max-width: 768px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .hide-on-desktop {
-    display: none !important;
-  }
 }
 </style>

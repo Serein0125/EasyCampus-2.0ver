@@ -859,9 +859,17 @@ export const notificationApi = {
   getUnreadCount() {
     return api.get('/v2/notifications/unread/count')
   },
+  /** 按类型获取未读数（LIKE/COMMENT/FOLLOW/CHAT），供通知页栏目角标使用 */
+  getUnreadCountByType() {
+    return api.get('/v2/notifications/unread/count-by-type')
+  },
   /** 标记单条通知为已读 */
   markAsRead(id: number | string) {
     return api.put(`/v2/notifications/${id}/read`)
+  },
+  /** 标记某一类型的所有通知为已读 */
+  markTypeAsRead(type: string) {
+    return api.put(`/v2/notifications/read/type/${type}`)
   },
   /** 标记所有通知为已读 */
   markAllAsRead() {

@@ -7,21 +7,22 @@
         </svg>
       </button>
       <h1 class="header-title">收货地址</h1>
-      <button @click="showAddForm" class="add-btn">+ 新增</button>
+      <el-button type="primary" size="small" round @click="showAddForm">+ 新增</el-button>
     </header>
 
     <main class="main-content">
-      <div v-if="addresses.length === 0" class="empty-state">
-        <div class="empty-icon">📍</div>
-        <h3>暂无收货地址</h3>
-        <p>添加一个收货地址，方便下单时使用</p>
-        <button @click="showAddForm" class="add-first-btn">添加地址</button>
-      </div>
+      <el-empty
+        v-if="addresses.length === 0"
+        description="暂无收货地址，添加一个方便下单时使用"
+      >
+        <el-button type="primary" @click="showAddForm">添加地址</el-button>
+      </el-empty>
 
       <div v-else class="address-list">
-        <div
+        <el-card
           v-for="(addr, index) in addresses"
           :key="index"
+          shadow="hover"
           class="address-card"
           :class="{ default: addr.isDefault }"
         >
@@ -29,69 +30,68 @@
             <div class="address-header">
               <span class="address-name">{{ addr.name }}</span>
               <span class="address-phone">{{ addr.phone }}</span>
-              <span v-if="addr.isDefault" class="default-tag">默认</span>
+              <el-tag v-if="addr.isDefault" type="warning" size="small" effect="light">默认</el-tag>
             </div>
             <div class="address-detail">{{ addr.province }}{{ addr.city }}{{ addr.district }}{{ addr.detail }}</div>
           </div>
           <div class="address-actions">
-            <button @click.stop="setDefault(index)" v-if="!addr.isDefault" class="action-link">设为默认</button>
-            <button @click.stop="editAddress(index)" class="action-link">编辑</button>
-            <button @click.stop="deleteAddress(index)" class="action-link danger">删除</button>
+            <el-button v-if="!addr.isDefault" link type="primary" size="small" @click.stop="setDefault(index)">设为默认</el-button>
+            <el-button link type="primary" size="small" @click.stop="editAddress(index)">编辑</el-button>
+            <el-button link type="danger" size="small" @click.stop="deleteAddress(index)">删除</el-button>
           </div>
-        </div>
+        </el-card>
       </div>
     </main>
 
-    <div v-if="showForm" class="modal-overlay" @click.self="showForm = false">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>{{ isEditing ? '编辑地址' : '新增地址' }}</h3>
-          <button @click="showForm = false" class="close-btn">×</button>
+    <el-dialog
+      v-model="showForm"
+      :title="isEditing ? '编辑地址' : '新增地址'"
+      width="480px"
+      append-to-body
+    >
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-position="top"
+        @submit.prevent
+      >
+        <div class="form-row">
+          <el-form-item label="收货人" prop="name" class="form-item-half">
+            <el-input v-model="formData.name" placeholder="请输入姓名" />
+          </el-form-item>
+          <el-form-item label="手机号" prop="phone" class="form-item-half">
+            <el-input v-model="formData.phone" placeholder="请输入手机号" maxlength="11" />
+          </el-form-item>
         </div>
-        <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>收货人</label>
-              <input v-model="formData.name" placeholder="请输入姓名" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label>手机号</label>
-              <input v-model="formData.phone" placeholder="请输入手机号" type="tel" class="form-input" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>省份</label>
-              <input v-model="formData.province" placeholder="如：北京市" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label>城市</label>
-              <input v-model="formData.city" placeholder="如：北京市" class="form-input" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>区/县</label>
-            <input v-model="formData.district" placeholder="如：海淀区" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label>详细地址</label>
-            <textarea v-model="formData.detail" placeholder="街道、楼栋、门牌号等" rows="3" class="form-textarea"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="formData.isDefault" />
-              <span>设为默认地址</span>
-            </label>
-          </div>
-          <button @click="saveAddress" class="save-btn">保存</button>
+        <div class="form-row">
+          <el-form-item label="省份" prop="province" class="form-item-half">
+            <el-input v-model="formData.province" placeholder="如：北京市" />
+          </el-form-item>
+          <el-form-item label="城市" prop="city" class="form-item-half">
+            <el-input v-model="formData.city" placeholder="如：北京市" />
+          </el-form-item>
         </div>
-      </div>
-    </div>
+        <el-form-item label="区/县" prop="district">
+          <el-input v-model="formData.district" placeholder="如：海淀区" />
+        </el-form-item>
+        <el-form-item label="详细地址" prop="detail">
+          <el-input v-model="formData.detail" type="textarea" :rows="3" placeholder="街道、楼栋、门牌号等" />
+        </el-form-item>
+        <el-form-item>
+          <el-checkbox v-model="formData.isDefault">设为默认地址</el-checkbox>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showForm = false">取消</el-button>
+        <el-button type="primary" @click="saveAddress">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useToast } from '../use/useToast'
 
 const addresses = ref([])
@@ -99,8 +99,9 @@ const showForm = ref(false)
 const toast = useToast()
 const isEditing = ref(false)
 const editIndex = ref(-1)
+const formRef = ref()
 
-const formData = ref({
+const formData = reactive({
   name: '',
   phone: '',
   province: '',
@@ -109,6 +110,15 @@ const formData = ref({
   detail: '',
   isDefault: false
 })
+
+const formRules = {
+  name: [{ required: true, message: '请输入收货人', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  detail: [{ required: true, message: '请输入详细地址', trigger: 'blur' }]
+}
 
 function loadAddresses() {
   try {
@@ -128,7 +138,7 @@ function saveToStorage() {
 function showAddForm() {
   isEditing.value = false
   editIndex.value = -1
-  formData.value = {
+  Object.assign(formData, {
     name: '',
     phone: '',
     province: '',
@@ -136,35 +146,42 @@ function showAddForm() {
     district: '',
     detail: '',
     isDefault: addresses.value.length === 0
-  }
+  })
+  formRef.value?.clearValidate()
   showForm.value = true
 }
 
 function editAddress(index) {
   isEditing.value = true
   editIndex.value = index
-  formData.value = { ...addresses.value[index] }
+  // 先重置为默认值再合并：Object.assign 只覆盖源对象已有的键，
+  // 旧数据若缺某个字段（如 isDefault）会沿用上一条地址的残留值
+  Object.assign(
+    formData,
+    { name: '', phone: '', province: '', city: '', district: '', detail: '', isDefault: false },
+    addresses.value[index]
+  )
+  formRef.value?.clearValidate()
   showForm.value = true
 }
 
-function saveAddress() {
-  if (!formData.value.name.trim() || !formData.value.phone.trim() || !formData.value.detail.trim()) {
-    toast.showToast('请填写收货人、手机号和详细地址', 'error')
-    return
-  }
+async function saveAddress() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
 
-  if (formData.value.isDefault) {
+  if (formData.isDefault) {
     addresses.value.forEach(a => a.isDefault = false)
   }
 
   if (isEditing.value) {
-    addresses.value[editIndex.value] = { ...formData.value }
+    addresses.value[editIndex.value] = { ...formData }
   } else {
-    addresses.value.push({ ...formData.value })
+    addresses.value.push({ ...formData })
   }
 
   saveToStorage()
   showForm.value = false
+  toast.showToast(isEditing.value ? '地址已更新' : '地址已添加', 'success')
 }
 
 function setDefault(index) {
@@ -179,6 +196,7 @@ function deleteAddress(index) {
     addresses.value[0].isDefault = true
   }
   saveToStorage()
+  toast.showToast('地址已删除', 'success')
 }
 
 function selectAddress(index) {
@@ -217,7 +235,10 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: #333;
+  border: none;
+  background: none;
   border-radius: 50%;
+  cursor: pointer;
 }
 
 .back-btn svg { width: 22px; height: 22px; }
@@ -230,52 +251,20 @@ onMounted(() => {
   flex: 1;
 }
 
-.add-btn {
-  padding: 6px 16px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .main-content {
   padding: 12px 16px 80px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state h3 { font-size: 18px; color: #333; margin: 0 0 8px; }
-.empty-state p { color: #999; margin-bottom: 20px; }
-
-.add-first-btn {
-  padding: 12px 32px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-  border: none;
-  border-radius: 24px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .address-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .address-card {
-  background: #fff;
   border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   border-left: 4px solid transparent;
 }
 
@@ -305,15 +294,6 @@ onMounted(() => {
   color: #666;
 }
 
-.default-tag {
-  padding: 2px 8px;
-  background: #FFF7E6;
-  color: #FA8C16;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 8px;
-}
-
 .address-detail {
   font-size: 14px;
   color: #666;
@@ -322,72 +302,10 @@ onMounted(() => {
 
 .address-actions {
   display: flex;
-  gap: 16px;
+  gap: 4px;
   margin-top: 12px;
-  padding-top: 12px;
+  padding-top: 8px;
   border-top: 1px solid #f5f5f5;
-}
-
-.action-link {
-  background: none;
-  border: none;
-  font-size: 13px;
-  color: #1890ff;
-  cursor: pointer;
-  padding: 0;
-}
-
-.action-link.danger {
-  color: #FF4D4F;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-end;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #fff;
-  border-radius: 16px 16px 0 0;
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 17px;
-  color: #333;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #999;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 20px;
 }
 
 .form-row {
@@ -395,66 +313,7 @@ onMounted(() => {
   gap: 12px;
 }
 
-.form-group {
-  margin-bottom: 16px;
+.form-item-half {
   flex: 1;
-}
-
-.form-group label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.form-input,
-.form-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  font-size: 15px;
-  color: #333;
-  outline: none;
-  background-color: #fafafa;
-  box-sizing: border-box;
-}
-
-.form-input:focus,
-.form-textarea:focus {
-  border-color: var(--color-primary-500, #10b981);
-  background-color: #fff;
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.checkbox-label input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-primary-500, #10b981);
-}
-
-.save-btn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 8px;
 }
 </style>

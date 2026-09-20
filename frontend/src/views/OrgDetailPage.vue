@@ -5,10 +5,12 @@
       <span class="nav-title">{{ org?.name || '组织详情' }}</span>
     </header>
 
-    <div v-if="loading" class="loading-state"><div class="skeleton-avatar"></div><div class="skeleton-line w-50"></div></div>
+    <div v-if="loading" class="loading-state">
+      <el-skeleton animated :rows="6" class="org-detail-skeleton" />
+    </div>
 
     <main v-else-if="org" class="org-content">
-      <section class="org-header">
+      <el-card shadow="never" class="org-header-card">
         <div class="org-logo" :style="{ backgroundColor: 'var(--color-primary-500, #10b981)' }">{{ org.name.charAt(0) }}</div>
         <h1>{{ org.name }}</h1>
         <p>{{ org.description || '暂无简介' }}</p>
@@ -21,85 +23,90 @@
         </div>
 
         <div class="org-actions" v-if="myRole">
-          <span class="role-badge">{{ roleLabel(myRole.role) }}</span>
-          <button v-if="myRole.role === 'ADMIN' || myRole.role === 'MODERATOR'" class="manage-btn" @click="showManage = !showManage">⚙ 管理</button>
-          <button v-if="myRole.role !== 'ADMIN'" class="leave-btn" @click="leaveOrg" :disabled="leaving">{{ leaving ? '退出中...' : '退出组织' }}</button>
+          <el-tag type="primary" round>{{ roleLabel(myRole.role) }}</el-tag>
+          <el-button v-if="myRole.role === 'ADMIN' || myRole.role === 'MODERATOR'" @click="showManage = !showManage">⚙ 管理</el-button>
+          <el-button v-if="myRole.role !== 'ADMIN'" type="danger" plain @click="leaveOrg" :disabled="leaving">{{ leaving ? '退出中...' : '退出组织' }}</el-button>
         </div>
         <div class="org-actions" v-else>
-          <button v-if="org.joinType === 'APPLY' && !hasApplied" class="join-btn" @click="applyJoin" :disabled="applying">{{ applying ? '提交中...' : '申请加入' }}</button>
-          <span v-else-if="hasApplied" class="applied-badge">已申请，等待审核</span>
+          <el-button v-if="org.joinType === 'APPLY' && !hasApplied" type="primary" round @click="applyJoin" :disabled="applying">{{ applying ? '提交中...' : '申请加入' }}</el-button>
+          <el-tag v-else-if="hasApplied" type="warning" round>已申请，等待审核</el-tag>
         </div>
-      </section>
+      </el-card>
 
-      <section v-if="showManage && (myRole?.role === 'ADMIN' || myRole?.role === 'MODERATOR')" class="manage-panel">
-        <div class="panel-tabs">
-          <button :class="{ active: manageTab === 'requests' }" @click="manageTab = 'requests'">申请列表</button>
-          <button :class="{ active: manageTab === 'members' }" @click="manageTab = 'members'">成员管理</button>
-          <button :class="{ active: manageTab === 'invite' }" @click="manageTab = 'invite'">邀请成员</button>
-          <button :class="{ active: manageTab === 'audit' }" @click="manageTab = 'audit'">操作日志</button>
-        </div>
-
-        <div v-if="manageTab === 'requests'" class="panel-body">
-          <div v-if="pendingRequests.length === 0" class="empty-panel">暂无待审批申请</div>
-          <div v-for="req in pendingRequests" :key="req.id" class="request-item">
-            <img :src="req.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
-            <span class="req-user">{{ req.userName || '用户' + req.userId }} 申请加入</span>
-            <span class="req-msg" v-if="req.message">{{ req.message }}</span>
-            <div class="req-actions">
-              <button class="btn-approve" @click="approveReq(req.id)">通过</button>
-              <button class="btn-reject" @click="rejectReq(req.id)">拒绝</button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="manageTab === 'members'" class="panel-body">
-          <div v-for="m in members" :key="m.id" class="member-item">
-            <img :src="m.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
-            <span class="member-name">{{ m.userName || '用户' + m.userId }}</span>
-            <span class="role-tag">{{ roleLabel(m.role) }}</span>
-            <div v-if="(myRole.role === 'ADMIN' || myRole.role === 'MODERATOR') && m.role !== 'ADMIN'" class="member-actions">
-              <button @click="changeRole(m.userId, 'MODERATOR')" v-if="m.role === 'MEMBER'">升为管理</button>
-              <button @click="changeRole(m.userId, 'MEMBER')" v-if="m.role === 'MODERATOR'">降为成员</button>
-              <button class="btn-danger" @click="removeMem(m.userId)">移出</button>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="manageTab === 'invite'" class="panel-body">
-          <div class="invite-form">
-            <div class="search-dropdown">
-              <input
-                v-model="inviteSearchKeyword"
-                type="text"
-                placeholder="输入用户昵称、账号或ID搜索"
-                class="form-input"
-                @input="onInviteSearchInput"
-                @focus="onInviteSearchFocus"
-              />
-              <div v-if="inviteSearchResults.length > 0" class="dropdown-list">
-                <div
-                  v-for="user in inviteSearchResults"
-                  :key="user.id"
-                  class="dropdown-item"
-                  @click="selectInviteUser(user)"
-                >
-                  <span class="user-name">{{ user.nickname || user.username }}</span>
-                  <span class="user-id">ID: {{ user.id }}</span>
+      <el-card v-if="showManage && (myRole?.role === 'ADMIN' || myRole?.role === 'MODERATOR')" shadow="never" class="manage-panel-card">
+        <el-tabs v-model="manageTab" stretch>
+          <el-tab-pane label="申请列表" name="requests">
+            <div v-if="manageTab === 'requests'" class="panel-body">
+              <el-empty v-if="pendingRequests.length === 0" description="暂无待审批申请" :image-size="80" />
+              <div v-for="req in pendingRequests" :key="req.id" class="request-item">
+                <img :src="req.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
+                <span class="req-user">{{ req.userName || '用户' + req.userId }} 申请加入</span>
+                <span class="req-msg" v-if="req.message">{{ req.message }}</span>
+                <div class="req-actions">
+                  <el-button type="primary" plain size="small" @click="approveReq(req.id)">通过</el-button>
+                  <el-button type="danger" plain size="small" @click="rejectReq(req.id)">拒绝</el-button>
                 </div>
               </div>
             </div>
-            <button class="btn-primary" @click="doInvite" :disabled="!inviteUserId">发送邀请</button>
-          </div>
-          <p v-if="invitedUserName" class="invite-target">正在邀请: {{ invitedUserName }}</p>
-        </div>
+          </el-tab-pane>
 
-        <div v-if="manageTab === 'audit'" class="panel-body">
-          <div v-for="log in auditLogs" :key="log.id" class="log-item">
-            <span class="log-action">{{ log.action }}</span>
-            <span class="log-time">{{ formatTime(log.createdAt) }}</span>
-          </div>
-        </div>
-      </section>
+          <el-tab-pane label="成员管理" name="members">
+            <div v-if="manageTab === 'members'" class="panel-body">
+              <el-empty v-if="members.length === 0" description="暂无成员" :image-size="80" />
+              <div v-for="m in members" :key="m.id" class="member-item">
+                <img :src="m.userAvatar || defaultAvatar" class="member-avatar" @error="(e) => ((e.target as HTMLImageElement).src = defaultAvatar)" />
+                <span class="member-name">{{ m.userName || '用户' + m.userId }}</span>
+                <el-tag size="small" effect="plain">{{ roleLabel(m.role) }}</el-tag>
+                <div v-if="(myRole.role === 'ADMIN' || myRole.role === 'MODERATOR') && m.role !== 'ADMIN'" class="member-actions">
+                  <el-button size="small" @click="changeRole(m.userId, 'MODERATOR')" v-if="m.role === 'MEMBER'">升为管理</el-button>
+                  <el-button size="small" @click="changeRole(m.userId, 'MEMBER')" v-if="m.role === 'MODERATOR'">降为成员</el-button>
+                  <el-button type="danger" plain size="small" @click="removeMem(m.userId)">移出</el-button>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="邀请成员" name="invite">
+            <div v-if="manageTab === 'invite'" class="panel-body">
+              <div class="invite-form">
+                <div class="search-dropdown">
+                  <el-input
+                    v-model="inviteSearchKeyword"
+                    type="text"
+                    placeholder="输入用户昵称、账号或ID搜索"
+                    clearable
+                    @input="onInviteSearchInput"
+                    @focus="onInviteSearchFocus"
+                  />
+                  <div v-if="inviteSearchResults.length > 0" class="dropdown-list">
+                    <div
+                      v-for="user in inviteSearchResults"
+                      :key="user.id"
+                      class="dropdown-item"
+                      @click="selectInviteUser(user)"
+                    >
+                      <span class="user-name">{{ user.nickname || user.username }}</span>
+                      <span class="user-id">ID: {{ user.id }}</span>
+                    </div>
+                  </div>
+                </div>
+                <el-button type="primary" @click="doInvite" :disabled="!inviteUserId">发送邀请</el-button>
+              </div>
+              <p v-if="invitedUserName" class="invite-target">正在邀请: {{ invitedUserName }}</p>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="操作日志" name="audit">
+            <div v-if="manageTab === 'audit'" class="panel-body">
+              <el-empty v-if="auditLogs.length === 0" description="暂无操作日志" :image-size="80" />
+              <div v-for="log in auditLogs" :key="log.id" class="log-item">
+                <span class="log-action">{{ log.action }}</span>
+                <span class="log-time">{{ formatTime(log.createdAt) }}</span>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </el-card>
     </main>
   </div>
 </template>
@@ -268,32 +275,15 @@ function formatTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
 .nav-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; }
 
 .loading-state { padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.skeleton-avatar { width: 80px; height: 80px; border-radius: 20px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
-.skeleton-line { height: 16px; border-radius: 4px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
-.w-50 { width: 50%; }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 .org-content { padding: 16px; max-width: 750px; margin: 0 auto; }
-.org-header { background: #fff; border-radius: 16px; padding: 28px 20px; text-align: center; margin-bottom: 16px; }
 .org-logo { width: 72px; height: 72px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 700; margin: 0 auto 14px; }
-.org-header h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
-.org-header p { font-size: 14px; color: #999; margin: 0 0 12px; }
+.org-header-card h1 { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+.org-header-card p { font-size: 14px; color: #999; margin: 0 0 12px; }
 .org-stats { font-size: 13px; color: #999; margin-bottom: 16px; }
-.org-actions { display: flex; gap: 10px; justify-content: center; align-items: center; }
-.role-badge { padding: 4px 14px; background: #E8F4FD; color: #1890FF; border-radius: 12px; font-size: 13px; font-weight: 600; }
-.manage-btn { padding: 8px 20px; border: 1px solid #DDE1E6; border-radius: 16px; background: #fff; font-size: 14px; cursor: pointer; }
-.leave-btn { padding: 8px 20px; border: 1px solid #FF4D4F; border-radius: 16px; background: #fff; color: #FF4D4F; font-size: 14px; cursor: pointer; }
-.leave-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.join-btn { padding: 10px 36px; border-radius: 20px; border: none; background: linear-gradient(135deg,var(--color-primary-500, #10b981),var(--color-primary-400, #34d399)); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
-.join-btn:disabled { opacity: 0.6; }
-.applied-badge { padding: 8px 20px; background: #FFF7E6; color: #FA8C16; border-radius: 16px; font-size: 14px; font-weight: 500; }
+.org-actions { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
 
-.manage-panel { background: #fff; border-radius: 16px; overflow: hidden; }
-.panel-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
-.panel-tabs button { flex: 1; padding: 14px 0; border: none; background: none; font-size: 13px; font-weight: 500; color: #999; cursor: pointer; }
-.panel-tabs button.active { color: var(--color-primary-500, #10b981); font-weight: 600; border-bottom: 2px solid var(--color-primary-500, #10b981); }
 .panel-body { padding: 12px 16px; }
-.empty-panel { text-align: center; padding: 32px; color: #ccc; }
 
 .request-item, .member-item { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; flex-wrap: wrap; }
 .req-user { flex: 1; min-width: 0; }
@@ -301,23 +291,41 @@ function formatTime(t) { return t ? new Date(t).toLocaleString('zh-CN') : '' }
 .member-name { font-weight: 500; color: #333; }
 .req-msg { color: #999; font-size: 12px; flex-basis: 100%; }
 .req-actions, .member-actions { margin-left: auto; display: flex; gap: 6px; }
-.btn-approve { padding: 4px 12px; border: none; border-radius: 12px; background: #E8F4FD; color: #1890FF; font-size: 12px; cursor: pointer; }
-.btn-reject { padding: 4px 12px; border: none; border-radius: 12px; background: #FFF1F0; color: #FF4D4F; font-size: 12px; cursor: pointer; }
-.btn-danger { padding: 4px 12px; border: none; border-radius: 12px; background: #FFF1F0; color: #FF4D4F; font-size: 12px; cursor: pointer; }
-.role-tag { padding: 2px 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px; color: #666; }
 
 .invite-form { display: flex; gap: 8px; }
 .search-dropdown { position: relative; flex: 1; }
-.form-input { width: 100%; padding: 10px 12px; border: 1px solid #DDE1E6; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
 .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #E8ECF0; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; }
 .dropdown-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; cursor: pointer; font-size: 13px; }
 .dropdown-item:hover { background: #F5F7FA; }
 .dropdown-item .user-name { color: #333; font-weight: 500; }
 .dropdown-item .user-id { color: #999; font-size: 12px; }
 .invite-target { margin: 8px 0 0; font-size: 13px; color: #1890FF; }
-.btn-primary { padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg,var(--color-primary-500, #10b981),var(--color-primary-400, #34d399)); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn-primary:disabled { opacity: 0.6; }
 .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
 .log-action { color: #333; } .log-time { color: #ccc; font-size: 11px; }
-.member-item button { padding: 4px 10px; border: 1px solid #DDE1E6; border-radius: 12px; background: #fff; font-size: 12px; cursor: pointer; color: #666; }
+</style>
+
+<style>
+/* el-card / el-tabs 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.org-detail-page .org-header-card.el-card {
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.org-detail-page .org-header-card.el-card .el-card__body {
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.org-detail-page .manage-panel-card.el-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.org-detail-page .manage-panel-card .el-tabs__header {
+  margin: 0;
+}
+
+.org-detail-page .org-detail-skeleton {
+  width: 100%;
+}
 </style>

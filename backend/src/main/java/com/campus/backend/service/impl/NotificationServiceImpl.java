@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -43,6 +45,28 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public int getUnreadCount(Long userId) {
         return notificationMapper.countUnread(userId);
+    }
+
+    @Override
+    public Map<String, Integer> getUnreadCountByType(Long userId) {
+        // 预置三类为 0，保证前端总能拿到完整键
+        Map<String, Integer> result = new HashMap<>();
+        result.put("LIKE", 0);
+        result.put("COMMENT", 0);
+        result.put("FOLLOW", 0);
+        for (Map<String, Object> row : notificationMapper.countUnreadByType(userId)) {
+            Object type = row.get("type");
+            Object cnt = row.get("cnt");
+            if (type != null && cnt instanceof Number) {
+                result.put(type.toString(), ((Number) cnt).intValue());
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public void markTypeAsRead(String type, Long userId) {
+        notificationMapper.markTypeAsRead(userId, type);
     }
 
     @Override

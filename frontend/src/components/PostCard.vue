@@ -1,6 +1,8 @@
 <template>
-  <div
-    class="post-card group/card relative overflow-hidden bg-white rounded-xl shadow-card cursor-pointer break-inside-avoid mb-2 transition-[transform,box-shadow] duration-200 ease-emphasized hover:-translate-y-0.5 hover:shadow-card-hover active:-translate-y-px active:scale-[0.99]"
+  <el-card
+    class="post-card group/card break-inside-avoid mb-2 cursor-pointer"
+    shadow="hover"
+    :body-style="{ padding: '0px' }"
     @click="emit('click')"
   >
     <div class="card-image relative w-full aspect-[4/3] flex items-center justify-center overflow-hidden bg-linear-135 from-primary-50 to-primary-100">
@@ -47,7 +49,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
@@ -147,5 +149,17 @@ function goToUser() {
   28% { transform: scale(1); }
   42% { transform: scale(1.3); }
   70% { transform: scale(1); }
+}
+</style>
+
+<style>
+/* el-card 根节点由 EP 渲染，scoped 无法命中，用全局类兜底（圆角/悬停微动效） */
+.post-card.el-card {
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.post-card.el-card:hover {
+  transform: translateY(-2px);
 }
 </style>

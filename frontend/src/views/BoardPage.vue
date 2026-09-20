@@ -1,14 +1,20 @@
 <template>
   <div class="board-detail-page">
-    <div class="header">
+    <header class="header">
       <button class="back-btn" @click="$router.back()">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </button>
       <span class="header-title">{{ board?.name || '加载中...' }}</span>
-    </div>
+    </header>
     <div class="content">
-      <p class="placeholder-text">圈子详情页 - 建设中</p>
-      <p class="placeholder-sub">这里将展示该圈子的帖子和商品</p>
+      <el-card shadow="never" class="board-placeholder-card">
+        <el-empty>
+          <template #description>
+            <p class="placeholder-text">圈子详情页 - 建设中</p>
+            <p class="placeholder-sub">这里将展示该圈子的帖子和商品</p>
+          </template>
+        </el-empty>
+      </el-card>
     </div>
   </div>
 </template>
@@ -33,6 +39,12 @@ onMounted(async () => {
 .back-btn { background: none; border: none; cursor: pointer; display: flex; color: #333; }
 .header-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; margin-right: 32px; }
 .content { padding: 60px 20px; text-align: center; }
-.placeholder-text { font-size: 16px; color: #999; }
-.placeholder-sub { font-size: 14px; color: #ccc; margin-top: 8px; }
+.placeholder-text { font-size: 16px; color: #999; margin: 0; }
+.placeholder-sub { font-size: 14px; color: #ccc; margin: 8px 0 0; }
+</style>
+
+<style>
+.board-placeholder-card.el-card {
+  border-radius: 16px;
+}
 </style>

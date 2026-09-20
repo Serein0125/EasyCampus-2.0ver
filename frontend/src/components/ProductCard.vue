@@ -1,6 +1,8 @@
 <template>
-  <div
-    class="product-card group/card relative overflow-hidden bg-white rounded-xl shadow-card cursor-pointer break-inside-avoid mb-2 transition-[transform,box-shadow] duration-200 ease-emphasized hover:-translate-y-0.5 hover:shadow-card-hover active:-translate-y-0.5 active:scale-[0.99]"
+  <el-card
+    class="product-card group/card break-inside-avoid mb-2 cursor-pointer"
+    shadow="hover"
+    :body-style="{ padding: '0px' }"
     @click="emit('click')"
   >
     <div class="card-image relative w-full aspect-[4/3] flex items-center justify-center overflow-hidden bg-linear-135 from-gray-100 to-gray-200">
@@ -62,7 +64,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
@@ -154,3 +156,15 @@ function goToUser() {
   if (sellerId) router.push(`/users/${sellerId}`)
 }
 </script>
+
+<style>
+/* el-card 根节点由 EP 渲染，scoped 无法命中，用全局类兜底（圆角/悬停微动效） */
+.product-card.el-card {
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.product-card.el-card:hover {
+  transform: translateY(-2px);
+}
+</style>

@@ -6,6 +6,10 @@
 node_modules/
 frontend/node_modules/
 
+# ---- 自动生成的类型声明（unplugin-auto-import / unplugin-vue-components，dev/build 时重新生成）----
+frontend/auto-imports.d.ts
+frontend/components.d.ts
+
 # ---- 构建输出 ----
 backend/target/
 frontend/dist/

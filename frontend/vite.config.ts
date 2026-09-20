@@ -1,13 +1,23 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 // https://vitejs.dev/config/
 // 注意：前端源码中大量使用了 `import.meta.env.VITE_*` 读取环境变量（见 src/services/api.ts），
 //       如果需要在不同环境切换 API/WS/图片地址，不要改这里，应该通过 `.env.development`
 //       或 `.env.production` 文件注入 VITE_ 开头的变量。
 export default defineConfig(({ mode }) => ({
-  plugins: [vue(), tailwindcss()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    // Element Plus 按需引入：模板中的 el-* 组件自动解析并只打包用到的，
+    // 自动生成的 auto-imports.d.ts / components.d.ts 已加入 tsconfig include
+    AutoImport({ resolvers: [ElementPlusResolver()] }),
+    Components({ resolvers: [ElementPlusResolver()] })
+  ],
   server: {
     // 监听所有网卡（0.0.0.0），让同一 WiFi 下的手机 / 其他设备可以通过
     // `http://本机局域网IP:3000` 访问前端页面；不加时默认只监听 127.0.0.1，
@@ -48,8 +58,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         // 把框架层（vue / vue-router / axios）单独打成一个 vendor chunk，
         // 这些包版本基本不变，长期缓存可以显著加速二次访问（生产部署尤其重要）。
+        // element-plus 体积较大且被多页共享，单独成包便于缓存与分包控制。
         manualChunks: {
-          vendor: ['vue', 'vue-router', 'axios']
+          vendor: ['vue', 'vue-router', 'axios'],
+          'element-plus': ['element-plus']
         }
       }
     }

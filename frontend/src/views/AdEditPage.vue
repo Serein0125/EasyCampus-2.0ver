@@ -3,7 +3,9 @@
     <div class="header">
       <button class="back-btn" @click="$router.back()">取消</button>
       <span class="header-title">广告编辑</span>
-      <button class="submit-btn" :disabled="!canSubmit || submitting" @click="submitAd">{{ submitting ? '发布中...' : '发布' }}</button>
+      <el-button type="primary" size="small" round :disabled="!canSubmit || submitting" @click="submitAd">
+        {{ submitting ? '发布中...' : '发布' }}
+      </el-button>
     </div>
 
     <div class="form-area">
@@ -12,24 +14,33 @@
         <ImageUploader v-model="imageUrls" :max-count="9" :max-size="10" />
       </section>
 
-      <input v-model="title" class="title-input" placeholder="请输入广告标题（2-200字）" maxlength="200" />
+      <el-card shadow="never" class="form-card">
+        <el-input v-model="title" placeholder="请输入广告标题（2-200字）" maxlength="200" class="title-input" />
 
-      <!-- 内容类型选择 -->
-      <div class="type-section">
-        <div class="section-label">内容类型</div>
-        <div class="type-toggle">
-          <button class="type-btn" :class="{ active: postType === 'SHOWCASE' }" @click="postType = 'SHOWCASE'">帖子展示</button>
-          <button class="type-btn" :class="{ active: postType === 'ACTIVITY' }" @click="postType = 'ACTIVITY'">活动推广</button>
+        <!-- 内容类型选择 -->
+        <div class="type-section">
+          <div class="section-label">内容类型</div>
+          <el-radio-group v-model="postType">
+            <el-radio-button value="SHOWCASE">帖子展示</el-radio-button>
+            <el-radio-button value="ACTIVITY">活动推广</el-radio-button>
+          </el-radio-group>
         </div>
-      </div>
 
-      <textarea v-model="content" class="content-input" :placeholder="postType === 'ACTIVITY' ? '描述你的活动内容，包括时间、地点、参与方式...' : '描述你的广告内容...'" maxlength="10000"></textarea>
-      <div class="char-count">{{ content.length }}/10000</div>
+        <el-input
+          v-model="content"
+          type="textarea"
+          :rows="8"
+          maxlength="10000"
+          show-word-limit
+          class="content-input"
+          :placeholder="postType === 'ACTIVITY' ? '描述你的活动内容，包括时间、地点、参与方式...' : '描述你的广告内容...'"
+        />
 
-      <div class="tag-section">
-        <div class="section-label">标签（选填，最多 5 个）</div>
-        <TagInput v-model="tags" :preset-tags="presetTags" :max-tags="5" placeholder="输入标签后按回车或逗号分隔..." />
-      </div>
+        <div class="tag-section">
+          <div class="section-label">标签（选填，最多 5 个）</div>
+          <TagInput v-model="tags" :preset-tags="presetTags" :max-tags="5" placeholder="输入标签后按回车添加..." />
+        </div>
+      </el-card>
 
       <!-- 推流套餐选择 -->
       <section class="package-section">
@@ -87,55 +98,52 @@
         </div>
       </section>
 
-      <!-- 付费确认弹窗 -->
-      <div v-if="showPayModal" class="pay-modal-overlay" @click.self="showPayModal = false">
-        <div class="pay-modal">
-          <h3 class="pay-modal-title">确认支付</h3>
-          <div class="pay-modal-info">
-            <div class="pay-info-row">
-              <span>套餐</span>
-              <span>{{ selectedPackageInfo?.name }}</span>
-            </div>
-            <div class="pay-info-row">
-              <span>推送间隔</span>
-              <span>每 {{ selectedPackageInfo?.interval }} 条内容出现1次</span>
-            </div>
-            <div class="pay-info-row">
-              <span>首页Banner</span>
-              <span>{{ selectedPackageInfo?.hasBanner ? '有' : '无' }}</span>
-            </div>
-            <div class="pay-info-row">
-              <span>推荐流</span>
-              <span>{{ selectedPackageInfo?.hasRecommendation ? '有' : '无' }}</span>
-            </div>
-            <div class="pay-info-row">
-              <span>预计曝光</span>
-              <span>{{ selectedPackageInfo?.estimatedReach }}</span>
-            </div>
-            <div class="pay-info-row">
-              <span>有效期</span>
-              <span>{{ selectedPackageInfo?.durationDays }}天</span>
-            </div>
-            <div class="pay-info-row total">
-              <span>支付金额</span>
-              <span class="pay-amount">¥{{ selectedPackageInfo?.price }}</span>
-            </div>
-          </div>
-          <div class="pay-modal-notice">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fa8c16" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>此为模拟支付，不会产生真实扣费</span>
-          </div>
-          <div class="pay-modal-actions">
-            <button class="pay-cancel-btn" @click="showPayModal = false">取消</button>
-            <button class="pay-confirm-btn" @click="confirmPay" :disabled="paying">
-              {{ paying ? '支付中...' : '确认支付' }}
-            </button>
-          </div>
+      <el-alert v-if="error" :title="error" type="error" :closable="false" show-icon class="error-alert" />
+    </div>
+
+    <!-- 付费确认弹窗 -->
+    <el-dialog v-model="showPayModal" title="确认支付" width="400px" append-to-body>
+      <div class="pay-modal-info">
+        <div class="pay-info-row">
+          <span>套餐</span>
+          <span>{{ selectedPackageInfo?.name }}</span>
+        </div>
+        <div class="pay-info-row">
+          <span>推送间隔</span>
+          <span>每 {{ selectedPackageInfo?.interval }} 条内容出现1次</span>
+        </div>
+        <div class="pay-info-row">
+          <span>首页Banner</span>
+          <span>{{ selectedPackageInfo?.hasBanner ? '有' : '无' }}</span>
+        </div>
+        <div class="pay-info-row">
+          <span>推荐流</span>
+          <span>{{ selectedPackageInfo?.hasRecommendation ? '有' : '无' }}</span>
+        </div>
+        <div class="pay-info-row">
+          <span>预计曝光</span>
+          <span>{{ selectedPackageInfo?.estimatedReach }}</span>
+        </div>
+        <div class="pay-info-row">
+          <span>有效期</span>
+          <span>{{ selectedPackageInfo?.durationDays }}天</span>
+        </div>
+        <div class="pay-info-row total">
+          <span>支付金额</span>
+          <span class="pay-amount">¥{{ selectedPackageInfo?.price }}</span>
         </div>
       </div>
-
-      <div v-if="error" class="error-msg">{{ error }}</div>
-    </div>
+      <div class="pay-modal-notice">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fa8c16" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>此为模拟支付，不会产生真实扣费</span>
+      </div>
+      <template #footer>
+        <el-button @click="showPayModal = false">取消</el-button>
+        <el-button type="primary" :loading="paying" @click="confirmPay">
+          {{ paying ? '支付中...' : '确认支付' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -307,63 +315,32 @@ async function confirmPay() {
 }
 .back-btn { background: none; border: none; font-size: 15px; color: #666; cursor: pointer; }
 .header-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; }
-.submit-btn {
-  padding: 6px 20px; border-radius: 16px; border: none;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), #ff9500);
-  color: #fff; font-size: 14px; cursor: pointer;
-}
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.form-area { padding: 16px; }
+.form-area { padding: 16px; max-width: 760px; margin: 0 auto; }
 .section-label { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
 
 .upload-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.image-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #f5f5f5; }
-.preview-img { width: 100%; height: 100%; object-fit: cover; }
-.uploading-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-.upload-progress { color: #fff; font-size: 12px; font-weight: 600; }
-.upload-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.img-remove-btn {
-  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
-  background: rgba(0,0,0,0.5); border-radius: 50%; display: flex;
-  align-items: center; justify-content: center; cursor: pointer; border: none;
-}
-.upload-trigger {
-  aspect-ratio: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 4px;
-  background: #fafafa; border: 2px dashed #ddd; border-radius: 8px; cursor: pointer;
-}
-.upload-trigger:active { background: #FFF7E6; }
-.upload-count { font-size: 12px; color: #bbb; }
-.upload-tip { margin-top: 10px; font-size: 12px; color: #999; }
 
-.title-input {
-  width: 100%; padding: 12px; border: none; border-radius: 8px;
-  font-size: 18px; font-weight: 600; outline: none; background: #fff;
-  margin-bottom: 12px; box-sizing: border-box;
+.form-card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
-.content-input {
-  width: 100%; min-height: 200px; padding: 12px; border: none;
-  border-radius: 8px; font-size: 15px; line-height: 1.8;
-  outline: none; background: #fff; resize: vertical; box-sizing: border-box;
-}
-.char-count { text-align: right; font-size: 12px; color: #999; padding: 4px 0; }
 
-.tag-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 16px; }
+.title-input :deep(.el-input__wrapper) {
+  box-shadow: none;
+  padding-left: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
 
-/* 内容类型切换 */
-.type-section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-.type-toggle { display: flex; gap: 8px; }
-.type-btn {
-  flex: 1; padding: 10px 16px; border: 2px solid #e8e8e8; border-radius: 8px;
-  background: #fafafa; font-size: 14px; font-weight: 600; color: #666;
-  cursor: pointer; transition: all 0.2s ease;
+.type-section { margin-bottom: 16px; }
+
+.content-input :deep(.el-textarea__inner) {
+  font-size: 15px;
+  line-height: 1.8;
 }
-.type-btn.active {
-  border-color: var(--color-primary-500, #10b981); background: #ecfdf5;
-  color: var(--color-primary-600, #059669);
-}
+
+.tag-section { margin-top: 16px; }
 
 /* 推流套餐 */
 .package-section { background: #fff; border-radius: 12px; padding: 16px; margin-top: 16px; }
@@ -406,7 +383,6 @@ async function confirmPay() {
 .package-scenario { margin-bottom: 6px; }
 .scenario-label { font-size: 11px; color: #999; margin-right: 6px; }
 .scenario-text { font-size: 12px; color: #666; line-height: 1.5; }
-.package-terms { }
 .terms-label { font-size: 11px; color: #bbb; margin-right: 6px; }
 .terms-text { font-size: 11px; color: #999; line-height: 1.5; }
 .package-check {
@@ -416,16 +392,6 @@ async function confirmPay() {
 }
 
 /* 付费弹窗 */
-.pay-modal-overlay {
-  position: fixed; inset: 0; z-index: 3000;
-  background: rgba(0,0,0,0.5); display: flex;
-  align-items: center; justify-content: center; padding: 20px;
-}
-.pay-modal {
-  background: #fff; border-radius: 16px; padding: 24px;
-  width: 100%; max-width: 360px;
-}
-.pay-modal-title { font-size: 18px; font-weight: 700; text-align: center; margin: 0 0 20px; }
 .pay-modal-info { margin-bottom: 16px; }
 .pay-info-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -438,17 +404,6 @@ async function confirmPay() {
   padding: 10px 12px; background: #fffbe6; border-radius: 8px;
   margin-bottom: 16px; font-size: 12px; color: #fa8c16;
 }
-.pay-modal-actions { display: flex; gap: 12px; }
-.pay-cancel-btn {
-  flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0;
-  background: #fff; font-size: 15px; color: #666; cursor: pointer;
-}
-.pay-confirm-btn {
-  flex: 1; padding: 12px; border-radius: 8px; border: none;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), #ff9500);
-  font-size: 15px; color: #fff; font-weight: 600; cursor: pointer;
-}
-.pay-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.error-msg { color: #ff4757; font-size: 14px; padding: 8px 0; }
+.error-alert { margin-top: 16px; }
 </style>

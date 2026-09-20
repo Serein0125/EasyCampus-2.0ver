@@ -9,41 +9,45 @@
     </header>
 
     <div class="tab-bar">
-      <button class="tab-btn" :class="{ active: activeTab === 'following' }" @click="switchTab('following')">
-        关注
-        <span v-if="stats.followingCount !== null" class="tab-count">{{ stats.followingCount }}</span>
-      </button>
-      <div class="tab-divider"></div>
-      <button class="tab-btn" :class="{ active: activeTab === 'followers' }" @click="switchTab('followers')">
-        粉丝
-        <span v-if="stats.followerCount !== null" class="tab-count">{{ stats.followerCount }}</span>
-      </button>
+      <el-tabs v-model="activeTab" @tab-change="switchTab">
+        <el-tab-pane name="following">
+          <template #label>
+            关注
+            <span v-if="stats.followingCount !== null" class="tab-count">{{ stats.followingCount }}</span>
+          </template>
+        </el-tab-pane>
+        <el-tab-pane name="followers">
+          <template #label>
+            粉丝
+            <span v-if="stats.followerCount !== null" class="tab-count">{{ stats.followerCount }}</span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <div v-if="loading" class="loading-state">
       <div v-for="i in 5" :key="i" class="skeleton-user"></div>
     </div>
 
-    <div v-else-if="users.length === 0" class="empty-state">
-      <div class="empty-icon">{{ activeTab === 'following' ? '👀' : '🌱' }}</div>
-      <p>{{ activeTab === 'following' ? '还没有关注任何人' : '还没有粉丝' }}</p>
-    </div>
+    <el-empty v-else-if="users.length === 0" :description="activeTab === 'following' ? '还没有关注任何人' : '还没有粉丝'" />
 
     <div v-else class="user-list">
-      <div v-for="user in users" :key="user.id" class="user-item" @click="goToProfile(user.id)">
-        <img :src="user.avatar || defaultAvatar" class="user-avatar" @error="onAvatarError" loading="lazy" />
-        <div class="user-info">
-          <h3 class="user-name">{{ user.nickname || user.username }}</h3>
-          <p class="user-id">@{{ user.username }}</p>
-          <p v-if="user.bio" class="user-bio">{{ user.bio }}</p>
-          <p v-if="user.school" class="user-school">{{ user.school }}</p>
+      <el-card v-for="user in users" :key="user.id" class="user-item" shadow="hover" :body-style="{ padding: '0px' }" @click="goToProfile(user.id)">
+        <div class="user-item-inner">
+          <img :src="user.avatar || defaultAvatar" class="user-avatar" @error="onAvatarError" loading="lazy" />
+          <div class="user-info">
+            <h3 class="user-name">{{ user.nickname || user.username }}</h3>
+            <p class="user-id">@{{ user.username }}</p>
+            <p v-if="user.bio" class="user-bio">{{ user.bio }}</p>
+            <p v-if="user.school" class="user-school">{{ user.school }}</p>
+          </div>
+          <div v-if="showFollowBtn(user.id)" class="user-action" @click.stop>
+            <button class="follow-btn" :class="{ followed: isUserFollowed(user.id) }" @click="handleToggleFollow(user)">
+              {{ isUserFollowed(user.id) ? '已关注' : '+ 关注' }}
+            </button>
+          </div>
         </div>
-        <div v-if="showFollowBtn(user.id)" class="user-action" @click.stop>
-          <button class="follow-btn" :class="{ followed: isUserFollowed(user.id) }" @click="handleToggleFollow(user)">
-            {{ isUserFollowed(user.id) ? '已关注' : '+ 关注' }}
-          </button>
-        </div>
-      </div>
+      </el-card>
 
       <div v-if="hasMore && !loadingMore" class="load-more">
         <button @click="loadMore" :disabled="loadingMore" class="load-more-btn">加载更多</button>
@@ -63,7 +67,7 @@ const route = useRoute()
 const router = useRouter()
 const { isAuthenticated, currentUser } = useAuthStore()
 
-const activeTab = ref(route.query.tab || 'following')
+const activeTab = ref<string>(String(route.query.tab || 'following'))
 const users = ref([])
 const loading = ref(true)
 const loadingMore = ref(false)
@@ -241,8 +245,6 @@ function onAvatarError(e) {
 .nav-spacer { width: 32px; flex-shrink: 0; }
 
 .tab-bar {
-  display: flex;
-  align-items: center;
   background: #fff;
   padding: 0 24px;
   position: sticky;
@@ -250,35 +252,8 @@ function onAvatarError(e) {
   z-index: 99;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 14px 0;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 500;
-  color: #999;
-  background: none;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.25s ease;
-}
-
-.tab-btn.active {
-  color: var(--color-primary-500, #10b981);
-  font-weight: 700;
-}
-
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 3px;
-  background: var(--color-primary-500, #10b981);
-  border-radius: 2px;
+.tab-bar :deep(.el-tabs__header) {
+  margin: 0;
 }
 
 .tab-count {
@@ -295,17 +270,6 @@ function onAvatarError(e) {
   border-radius: 9px;
 }
 
-.tab-btn.active .tab-count {
-  background: #E8F5E9;
-  color: var(--color-primary-500, #10b981);
-}
-
-.tab-divider {
-  width: 1px;
-  height: 20px;
-  background: #E8ECF0;
-}
-
 .loading-state { padding: 16px; }
 
 .skeleton-user {
@@ -319,29 +283,19 @@ function onAvatarError(e) {
 
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 0;
-  color: #999;
-}
-
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-
 .user-list { padding: 8px 16px 32px; }
 
 .user-item {
+  margin-bottom: 8px;
+}
+
+.user-item-inner {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #fff;
-  border-radius: 12px;
-  margin-bottom: 8px;
   cursor: pointer;
-  transition: transform 0.15s ease;
 }
-
-.user-item:active { transform: scale(0.98); }
 
 .user-avatar {
   width: 48px;

@@ -29,14 +29,13 @@
           </template>
         </div>
         <router-link to="/" class="logo-link">
-          <span class="logo-text hide-on-mobile">易校EasyCampus</span>
-          <span class="logo-text hide-on-desktop">易校</span>
-          <span class="logo-sub hide-on-mobile">EasyCampus</span>
+          <span class="logo-text">易校EasyCampus</span>
+          <span class="logo-sub">EasyCampus</span>
         </router-link>
       </div>
 
       <nav class="header-center">
-        <div class="desktop-nav hide-on-mobile">
+        <div class="desktop-nav">
           <router-link
             v-for="item in desktopNavItems"
             :key="item.path"
@@ -46,17 +45,6 @@
           >
             {{ item.label }}
           </router-link>
-        </div>
-        <div class="mobile-nav hide-on-desktop">
-          <button
-            v-for="tab in headerTabs"
-            :key="tab.key"
-            class="mobile-nav-tab"
-            :class="{ active: activeTab === tab.key }"
-            @click="switchTab(tab.key)"
-          >
-            {{ tab.label }}
-          </button>
         </div>
       </nav>
 
@@ -102,11 +90,6 @@ const router = useRouter()
 const { isAuthenticated, currentUser } = useAuthStore()
 const { hasUnread } = useNotificationStore()
 
-const headerTabs = [
-  { key: 'following', label: '关注' },
-  { key: 'discover', label: '发现' }
-]
-
 const desktopNavItems = [
   { label: '首页', path: '/' },
   { label: '社区', path: '/community' },
@@ -121,22 +104,11 @@ const avatarLoadError = ref(false)
 
 const userAvatar = computed(() => currentUser.value?.avatar || '')
 
-const activeTab = computed(() => {
-  if (route.path === '/') {
-    return route.query.tab || 'discover'
-  }
-  return 'discover'
-})
-
 function isDesktopActive(path) {
   if (path === '/') {
     return route.path === '/' && !route.query.tab
   }
   return route.path.startsWith(path)
-}
-
-function switchTab(key) {
-  router.push({ path: '/', query: { tab: key } })
 }
 
 function activateSearch() {
@@ -273,40 +245,6 @@ function handleSearch() {
     width: 24px;
     opacity: 1;
   }
-}
-
-.mobile-nav {
-  display: flex;
-  align-items: center;
-}
-
-.mobile-nav-tab {
-  padding: var(--space-2, 0.5rem) var(--space-5, 1.25rem);
-  font-size: 15px;
-  font-weight: var(--font-medium, 500);
-  color: var(--color-text-secondary, #6b7280);
-  background: none;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  transition: color var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.mobile-nav-tab.active {
-  color: var(--color-primary-600, #059669);
-  font-weight: var(--font-bold, 700);
-}
-
-.mobile-nav-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 3px;
-  background: var(--gradient-primary, linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%));
-  border-radius: var(--radius-full, 9999px);
 }
 
 .header-right {

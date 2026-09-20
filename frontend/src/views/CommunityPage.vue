@@ -1,23 +1,18 @@
 <template>
   <div class="community-page">
-    <!-- 下拉刷新指示器 -->
-    <div class="pull-refresh-indicator" :style="{ transform: `translateY(${pullDistance}px)`, transition: isRefreshing ? 'none' : 'transform 0.3s ease' }">
-      <div v-if="pullDistance > 0 || isRefreshing" class="pull-indicator-inner">
-        <div class="pull-spinner" :class="{ spinning: isRefreshing }"></div>
-        <span class="pull-text">{{ isRefreshing ? '刷新中...' : canTrigger ? '松手刷新' : '下拉刷新' }}</span>
-      </div>
-    </div>
     <div class="page-header">
       <h1 class="page-title">社区</h1>
-      <button class="write-btn" @click="goToCreatePost">
+      <el-button type="primary" round class="write-btn" @click="goToCreatePost">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         写帖子
-      </button>
+      </el-button>
     </div>
 
     <div class="top-tabs">
-      <button :class="{ active: tab === 'latest' }" @click="tab = 'latest'">最新</button>
-      <button :class="{ active: tab === 'hot' }" @click="tab = 'hot'">热门</button>
+      <el-radio-group v-model="tab" class="feed-tabs">
+        <el-radio-button value="latest">最新</el-radio-button>
+        <el-radio-button value="hot">热门</el-radio-button>
+      </el-radio-group>
     </div>
 
     <div class="content-area">
@@ -25,17 +20,16 @@
         <div class="skeleton" v-for="i in 5" :key="i"></div>
       </div>
 
-      <div v-else-if="error" class="error-state">
-        <div class="error-icon">⚠️</div>
-        <p>{{ error }}</p>
-        <button @click="loadFeed">重试</button>
-      </div>
+      <el-empty v-else-if="error" :description="error">
+        <el-button type="primary" round @click="loadFeed">重试</el-button>
+      </el-empty>
 
-      <div v-else-if="items.length === 0" class="empty-state">
-        <div class="empty-icon">🌿</div>
-        <p class="empty-title">这里还空空如也</p>
-        <p class="empty-desc">快来发布第一帖，和大家分享你的校园生活吧！</p>
-      </div>
+      <el-empty v-else-if="items.length === 0">
+        <template #description>
+          <p class="empty-title">这里还空空如也</p>
+          <p class="empty-desc">快来发布第一帖，和大家分享你的校园生活吧！</p>
+        </template>
+      </el-empty>
 
       <div v-else class="feed-list">
         <PostCard
@@ -57,12 +51,12 @@
       </div>
     </div>
 
-    <button class="fab" @click="goToCreatePost">
+    <el-button class="fab" type="primary" circle @click="goToCreatePost">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
-    </button>
+    </el-button>
   </div>
 </template>
 
@@ -71,7 +65,6 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { postApi } from '../services/api'
 import PostCard from '../components/PostCard.vue'
-import { usePullRefresh } from '../use/usePullRefresh'
 
 const router = useRouter()
 const tab = ref('latest')
@@ -150,14 +143,7 @@ function setupScrollObserver() {
   })
 }
 
-// 下拉刷新
-const { isRefreshing, pullDistance, canTrigger } = usePullRefresh(async () => {
-  page.value = 1
-  hasMore.value = true
-  await loadFeed()
-})
-
-/* 活动类型帖子跳转到活动详情页，其他类型跳转到帖子详情页 */
+// 下拉刷新已移除（H5 移动端特化）
 function handleLikeToggle(item, data) {
   item.isLiked = data.isLiked
   item.likeCount = data.count
@@ -178,40 +164,6 @@ function goToCreatePost() { router.push('/community/posts/create') }
   position: relative;
   min-height: 100vh;
   background: var(--color-bg-page);
-  padding-bottom: calc(var(--tabbar-height) + var(--space-4));
-}
-
-/* 下拉刷新指示器 */
-.pull-refresh-indicator {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  z-index: 5;
-}
-.pull-indicator-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-tertiary, #9ca3af);
-  font-size: 13px;
-}
-.pull-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--color-border-light, #e5e7eb);
-  border-top-color: var(--color-primary-500, #10b981);
-  border-radius: 50%;
-}
-.pull-spinner.spinning {
-  animation: pullRefreshSpin 0.8s linear infinite;
-}
-@keyframes pullRefreshSpin {
-  to { transform: rotate(360deg); }
 }
 
 .page-header {
@@ -228,58 +180,14 @@ function goToCreatePost() { router.push('/community/posts/create') }
   margin: 0;
 }
 
-.write-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(16,185,129,0.25);
-  transition: all 0.2s ease;
-}
-
-.write-btn:active { transform: scale(0.95); }
-
 .top-tabs {
   display: flex;
-  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border-light);
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-}
-
-.top-tabs button {
-  padding: var(--space-2) var(--space-5);
-  border: none;
-  background: var(--color-bg-tertiary);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  border-radius: var(--radius-full);
-  transition: all var(--duration-normal) var(--ease-out);
-  line-height: var(--leading-tight);
-}
-
-.top-tabs button:hover:not(.active) {
-  background: var(--color-primary-50);
-  color: var(--color-primary-600);
-}
-
-.top-tabs button.active {
-  background: var(--gradient-primary);
-  color: var(--color-text-inverse);
-  font-weight: var(--font-semibold);
-  box-shadow: var(--shadow-green);
 }
 
 .content-area {
@@ -312,68 +220,6 @@ function goToCreatePost() { router.push('/community/posts/create') }
   100% { background-position: 0 50%; }
 }
 
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-16) var(--space-4);
-  text-align: center;
-}
-
-.error-icon {
-  font-size: 48px;
-  margin-bottom: var(--space-4);
-}
-
-.error-state p {
-  color: var(--color-text-secondary);
-  font-size: var(--text-base);
-  margin-bottom: var(--space-5);
-}
-
-.error-state button {
-  padding: var(--space-2_5) var(--space-8);
-  border: none;
-  background: var(--gradient-primary);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  box-shadow: var(--shadow-green);
-  transition: all var(--duration-normal) var(--ease-out);
-}
-
-.error-state button:hover {
-  box-shadow: var(--shadow-green-lg);
-  transform: translateY(-1px);
-}
-
-.error-state button:active {
-  transform: scale(0.97);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-16) var(--space-4);
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: var(--space-4);
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
 .empty-title {
   font-size: var(--text-xl);
   font-weight: var(--font-semibold);
@@ -386,6 +232,7 @@ function goToCreatePost() { router.push('/community/posts/create') }
   color: var(--color-text-tertiary);
   max-width: 280px;
   line-height: var(--leading-relaxed);
+  margin: 0;
 }
 
 .feed-list {
@@ -443,34 +290,6 @@ function goToCreatePost() { router.push('/community/posts/create') }
   }
 }
 
-.fab {
-  position: fixed;
-  bottom: calc(var(--tabbar-height) + var(--space-5));
-  right: var(--space-5);
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
-  border: none;
-  background: var(--gradient-primary);
-  color: var(--color-text-inverse);
-  cursor: pointer;
-  box-shadow: var(--shadow-green-lg);
-  z-index: var(--z-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--duration-normal) var(--ease-spring);
-}
-
-.fab:hover {
-  transform: scale(1.08) rotate(90deg);
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
-}
-
-.fab:active {
-  transform: scale(0.95);
-}
-
 @media (min-width: 769px) {
   .feed-list {
     column-count: 3;
@@ -479,12 +298,6 @@ function goToCreatePost() { router.push('/community/posts/create') }
 
   .top-tabs {
     padding: var(--space-4) var(--space-6);
-    gap: var(--space-4);
-  }
-
-  .top-tabs button {
-    padding: var(--space-2_5) var(--space-6);
-    font-size: var(--text-base);
   }
 
   .content-area {
@@ -497,5 +310,58 @@ function goToCreatePost() { router.push('/community/posts/create') }
     column-count: 4;
     column-gap: 8px;
   }
+}
+</style>
+
+<style>
+/* el-card / el-button 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.community-page .write-btn.el-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
+  border: none;
+  font-weight: 600;
+}
+
+.community-page .fab.el-button {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  z-index: var(--z-overlay);
+  box-shadow: var(--shadow-green-lg);
+}
+
+/* 最新/热门 胶囊 tab：覆盖 el-radio-button 默认边框为胶囊样式 */
+.community-page .feed-tabs.el-radio-group {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--color-bg-tertiary, #f3f4f6);
+  border-radius: var(--radius-full);
+}
+
+.community-page .feed-tabs .el-radio-button {
+  --el-radio-button-checked-bg-color: var(--color-primary-500, #10b981);
+  --el-radio-button-checked-border-color: transparent;
+  --el-radio-button-checked-text-color: #fff;
+}
+
+.community-page .feed-tabs .el-radio-button__inner {
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-text-secondary, #6b7280);
+  font-weight: 500;
+  padding: 6px 22px;
+}
+
+.community-page .feed-tabs .el-radio-button.is-active .el-radio-button__inner {
+  background: var(--gradient-primary, linear-gradient(135deg, #10b981, #34d399));
+  color: var(--color-text-inverse, #fff);
+  box-shadow: var(--shadow-green);
 }
 </style>

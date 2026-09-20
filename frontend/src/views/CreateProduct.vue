@@ -39,133 +39,99 @@
       </section>
 
       <section class="form-section">
-        <div class="form-group">
-          <label class="form-label required">商品标题</label>
-          <input
-            type="text"
-            v-model="formData.name"
-            placeholder="请输入商品标题（5-30字）"
-            maxlength="30"
-            class="form-input"
-            :class="{ 'input-error': errors.name }"
-            @blur="validateField('name')"
-            @input="clearError('name')"
-          />
-          <span class="char-count">{{ formData.name.length }}/30</span>
-          <p v-if="errors.name" class="error-text">{{ errors.name }}</p>
-        </div>
+        <el-form
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          label-position="top"
+          @submit.prevent
+        >
+          <el-form-item label="商品标题" prop="name">
+            <el-input
+              v-model="formData.name"
+              placeholder="请输入商品标题（5-30字）"
+              maxlength="30"
+              show-word-limit
+            />
+          </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label required">商品描述</label>
-          <textarea
-            v-model="formData.description"
-            placeholder="描述一下商品的成色、购买时间、使用情况等..."
-            rows="4"
-            maxlength="500"
-            class="form-textarea"
-            :class="{ 'input-error': errors.description }"
-            @blur="validateField('description')"
-            @input="clearError('description')"
-          ></textarea>
-          <span class="char-count">{{ formData.description.length }}/500</span>
-          <p v-if="errors.description" class="error-text">{{ errors.description }}</p>
-        </div>
+          <el-form-item label="商品描述" prop="description">
+            <el-input
+              v-model="formData.description"
+              type="textarea"
+              :rows="4"
+              maxlength="500"
+              show-word-limit
+              placeholder="描述一下商品的成色、购买时间、使用情况等..."
+            />
+          </el-form-item>
 
-        <div class="form-row">
-          <div class="form-group half">
-            <label class="form-label required">价格（元）</label>
-            <div class="price-input-wrapper" :class="{ 'input-error-border': errors.price }">
-              <span class="price-prefix">¥</span>
-              <input
-                type="number"
-                v-model.number="formData.price"
+          <div class="form-row">
+            <el-form-item label="价格（元）" prop="price" class="form-item-half">
+              <el-input-number
+                v-model="formData.price"
+                :min="0"
+                :precision="2"
+                :step="0.5"
+                :controls="false"
                 placeholder="0.00"
-                min="0"
-                step="0.01"
-                class="form-input price-input"
-                @blur="validateField('price')"
-                @input="clearError('price')"
-              />
-            </div>
-            <p v-if="errors.price" class="error-text">{{ errors.price }}</p>
-          </div>
+                class="price-input-number"
+              >
+                <template #prefix>
+                  <span class="price-prefix">¥</span>
+                </template>
+              </el-input-number>
+            </el-form-item>
 
-          <div class="form-group half">
-            <label class="form-label">原价（元）</label>
-            <div class="price-input-wrapper">
-              <span class="price-prefix">¥</span>
-              <input
-                type="number"
-                v-model.number="formData.originalPrice"
+            <el-form-item label="原价（元）" class="form-item-half">
+              <el-input-number
+                v-model="formData.originalPrice"
+                :min="0"
+                :precision="2"
+                :controls="false"
                 placeholder="选填"
-                min="0"
-                step="0.01"
-                class="form-input price-input"
-              />
-            </div>
+                class="price-input-number"
+              >
+                <template #prefix>
+                  <span class="price-prefix">¥</span>
+                </template>
+              </el-input-number>
+            </el-form-item>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label required">分类</label>
-          <select
-            v-model="formData.categoryId"
-            class="form-select"
-            :class="{ 'input-error': errors.categoryId }"
-            @change="clearError('categoryId')"
-          >
-            <option value="">请选择分类</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
-          </select>
-          <p v-if="errors.categoryId" class="error-text">{{ errors.categoryId }}</p>
-          <p v-if="categoriesLoading" class="loading-hint">加载分类中...</p>
-        </div>
+          <el-form-item label="分类" prop="categoryId">
+            <el-select v-model="formData.categoryId" placeholder="请选择分类" class="full-width">
+              <el-option v-for="cat in categories" :key="cat.id" :label="cat.name" :value="cat.id" />
+            </el-select>
+          </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label required">成色</label>
-          <div class="condition-options">
-            <button
-              v-for="cond in conditions"
-              :key="cond.value"
-              @click="selectCondition(cond.value)"
-              :class="['condition-option', { active: formData.conditionLevel === cond.value }]"
-            >
-              {{ cond.label }}
-            </button>
-          </div>
-          <p v-if="errors.conditionLevel" class="error-text">{{ errors.conditionLevel }}</p>
-        </div>
+          <el-form-item label="成色" prop="conditionLevel">
+            <el-radio-group v-model="formData.conditionLevel">
+              <el-radio-button v-for="cond in conditions" :key="cond.value" :value="cond.value">
+                {{ cond.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label">交付方式</label>
-          <div class="condition-options">
-            <button
-              v-for="dm in deliveryMethods"
-              :key="dm.value"
-              @click="formData.deliveryMethod = dm.value"
-              :class="['condition-option', { active: formData.deliveryMethod === dm.value }]"
-            >
-              {{ dm.label }}
-            </button>
-          </div>
-        </div>
+          <el-form-item label="交付方式">
+            <el-radio-group v-model="formData.deliveryMethod">
+              <el-radio-button v-for="dm in deliveryMethods" :key="dm.value" :value="dm.value">
+                {{ dm.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label">交易地点</label>
-          <input
-            type="text"
-            v-model="formData.location"
-            placeholder="如：图书馆门口、宿舍楼大厅等"
-            class="form-input"
-          />
-        </div>
+          <el-form-item label="交易地点">
+            <el-input
+              v-model="formData.location"
+              placeholder="如：图书馆门口、宿舍楼大厅等"
+            />
+          </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label">标签（选填，最多 5 个）</label>
-          <TagInput v-model="tags" :preset-tags="tagPresets" :max-tags="5" placeholder="输入标签后按回车或逗号分隔..." />
-        </div>
+          <el-form-item label="标签（选填，最多 5 个）">
+            <TagInput v-model="tags" :preset-tags="tagPresets" :max-tags="5" placeholder="输入标签后按回车添加..." />
+          </el-form-item>
+        </el-form>
       </section>
 
       <section class="notice-section">
@@ -180,14 +146,16 @@
 
       <div class="submit-row">
         <span v-if="missingHint" class="submit-tooltip">{{ missingHint }}</span>
-        <button
-          @click="handleSubmit"
+        <el-button
+          type="primary"
+          size="large"
+          round
           :disabled="submitting || !isFormValid"
-          class="publish-btn"
-          :class="{ active: isFormValid && !submitting }"
+          :loading="submitting"
+          @click="handleSubmit"
         >
           {{ submitting ? '发布中...' : '发布' }}
-        </button>
+        </el-button>
       </div>
     </main>
 
@@ -195,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useToast } from '../use/useToast'
@@ -206,6 +174,8 @@ import ImageUploader from '../components/ImageUploader.vue'
 const router = useRouter()
 const { isAuthenticated } = useAuthStore()
 const toast = useToast()
+
+const formRef = ref()
 
 const formData = ref({
   name: '',
@@ -235,13 +205,26 @@ const tagPresets = [
   '二手', '闲置', '全新', '九成新', '包邮', '可刀'
 ]
 
-const errors = reactive({
-  name: '',
-  description: '',
-  price: '',
-  categoryId: '',
-  conditionLevel: ''
-})
+const rules = {
+  name: [
+    { required: true, message: '请输入商品标题', trigger: 'blur' },
+    { min: 5, max: 30, message: '标题至少5个字符', trigger: 'blur' }
+  ],
+  description: [{ required: true, message: '请输入商品描述', trigger: 'blur' }],
+  price: [
+    { validator: (_rule: unknown, value: number | null, callback: (e?: Error) => void) => {
+      if (value === null || value === undefined) {
+        callback(new Error('请输入价格'))
+      } else if (value <= 0) {
+        callback(new Error('价格必须大于0'))
+      } else {
+        callback()
+      }
+    }, trigger: 'change' }
+  ],
+  categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
+  conditionLevel: [{ required: true, message: '请选择成色', trigger: 'change' }]
+}
 
 const conditions = [
   { value: 1, label: '全新' },
@@ -256,68 +239,6 @@ const deliveryMethods = [
   { value: 2, label: '快递' },
   { value: 3, label: '均可' }
 ]
-
-function selectCondition(value) {
-  formData.value.conditionLevel = value
-  if (errors.conditionLevel) errors.conditionLevel = ''
-}
-
-function validateField(field) {
-  switch (field) {
-    case 'name':
-      if (!formData.value.name.trim()) {
-        errors.name = '请输入商品标题'
-      } else if (formData.value.name.trim().length < 5) {
-        errors.name = '标题至少5个字符'
-      } else {
-        errors.name = ''
-      }
-      break
-    case 'description':
-      if (!formData.value.description.trim()) {
-        errors.description = '请输入商品描述'
-      } else {
-        errors.description = ''
-      }
-      break
-    case 'price':
-      if (formData.value.price === null || formData.value.price === '') {
-        errors.price = '请输入价格'
-      } else if (formData.value.price <= 0) {
-        errors.price = '价格必须大于0'
-      } else {
-        errors.price = ''
-      }
-      break
-    case 'categoryId':
-      if (!formData.value.categoryId) {
-        errors.categoryId = '请选择分类'
-      } else {
-        errors.categoryId = ''
-      }
-      break
-    case 'conditionLevel':
-      if (!formData.value.conditionLevel) {
-        errors.conditionLevel = '请选择成色'
-      } else {
-        errors.conditionLevel = ''
-      }
-      break
-  }
-}
-
-function clearError(field) {
-  errors[field] = ''
-}
-
-function validateAll() {
-  validateField('name')
-  validateField('description')
-  validateField('price')
-  validateField('categoryId')
-  validateField('conditionLevel')
-  return !errors.name && !errors.description && !errors.price && !errors.categoryId && !errors.conditionLevel
-}
 
 const isFormValid = computed(() => {
   return (
@@ -367,10 +288,8 @@ async function loadCategories() {
 async function handleSubmit() {
   if (!isFormValid.value || submitting.value) return
 
-  if (!validateAll()) {
-    toast.showToast('请完善必填信息', 'error')
-    return
-  }
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
 
   if (!isAuthenticated.value) {
     toast.showToast('请先登录', 'error')
@@ -492,14 +411,12 @@ async function generateWithAI() {
         const titleMatch = text.match(/标题[:：]\s*(.*?)(?:描述[:：]|$)/)
         if (titleMatch?.[1].trim()) {
           formData.value.name = titleMatch[1].trim()
-          clearError('name')
         }
       }
       if (hasDesc) {
         const descMatch = text.match(/描述[:：]\s*([\s\S]*)$/)
         if (descMatch?.[1].trim()) {
           formData.value.description = descMatch[1].trim()
-          clearError('description')
         }
       }
     }
@@ -530,7 +447,6 @@ async function generateWithAI() {
       // 既没有标题也没有描述标记：把整段正文当作描述回填（描述字段渲染支持换行）
       if (finalText) {
         formData.value.description = finalText
-        clearError('description')
       }
     }
 
@@ -607,6 +523,8 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 10px;
   padding: 0 16px 24px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .submit-tooltip {
@@ -617,38 +535,10 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.publish-btn {
-  padding: 12px 32px;
-  border-radius: 24px;
-  border: none;
-  background: #d0d0d0;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  transition: all 0.25s ease;
-  letter-spacing: 2px;
-}
-
-.publish-btn.active {
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), #059669);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
-}
-
-.publish-btn.active:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
-}
-
-.publish-btn.active:active { transform: translateY(0) scale(0.96); }
-
-.publish-btn:disabled {
-  cursor: not-allowed;
-}
-
 .form-content {
   padding-bottom: 40px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .upload-section {
@@ -755,112 +645,6 @@ onMounted(() => {
   margin-bottom: 14px;
 }
 
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.image-item {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #f5f5f5;
-}
-
-.preview-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.image-uploading {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upload-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.image-error-mask {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 77, 79, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-}
-
-.remove-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.remove-btn svg { width: 12px; height: 12px; }
-.remove-btn:active { background-color: rgba(255, 77, 79, 0.9); }
-
-.upload-trigger {
-  aspect-ratio: 1 / 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background-color: #fafafa;
-  border: 2px dashed #e0e0e0;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.upload-trigger:active {
-  background-color: #FFF7E6;
-  border-color: #FFD591;
-}
-
-.upload-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upload-icon-wrapper svg { width: 32px; height: 32px; }
-
-.upload-text {
-  font-size: 13px;
-  color: #bbb;
-}
-
 .upload-tip {
   margin-top: 12px;
   font-size: 12px;
@@ -874,163 +658,32 @@ onMounted(() => {
   padding: 8px 16px 20px;
 }
 
-.form-group {
-  margin-top: 20px;
-  position: relative;
-}
-
-.form-group.half {
-  flex: 1;
-}
-
 .form-row {
   display: flex;
   gap: 16px;
 }
 
-.form-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
+.form-item-half {
+  flex: 1;
 }
 
-.form-label.required::after {
-  content: '*';
-  color: #FF4D4F;
-  margin-left: 3px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
+.price-input-number {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  font-size: 15px;
-  color: #333;
-  outline: none;
-  transition: all 0.25s ease;
-  background-color: #fafafa;
 }
 
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-  border-color: var(--color-primary-500, #10b981);
-  background-color: #fff;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
-}
-
-.form-input::placeholder,
-.form-textarea::placeholder {
-  color: #ccc;
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-  line-height: 1.6;
-}
-
-.form-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-}
-
-.char-count {
-  position: absolute;
-  right: 0;
-  bottom: -22px;
-  font-size: 12px;
-  color: #ccc;
-}
-
-.input-error {
-  border-color: #FF4D4F !important;
-  background-color: #FFF2F0 !important;
-}
-
-.input-error-border {
-  border-color: #FF4D4F !important;
-}
-
-.error-text {
-  font-size: 12px;
-  color: #FF4D4F;
-  margin-top: 6px;
-  margin-bottom: 0;
-}
-
-.loading-hint {
-  font-size: 12px;
-  color: #999;
-  margin-top: 6px;
-}
-
-.price-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #fafafa;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.price-input-wrapper:focus-within {
-  border-color: var(--color-primary-500, #10b981);
-  background-color: #fff;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+.price-input-number :deep(.el-input__wrapper) {
+  padding-left: 6px;
 }
 
 .price-prefix {
-  padding-left: 14px;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
-  color: #FF4D4F;
+  color: var(--color-primary-500, #10b981);
+  margin-right: 2px;
 }
 
-.price-input {
-  border: none !important;
-  background: none !important;
-  padding: 12px 14px !important;
-  box-shadow: none !important;
-  font-weight: 600;
-}
-
-.condition-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.condition-option {
-  padding: 9px 18px;
-  background-color: #f5f5f5;
-  border: 1px solid transparent;
-  border-radius: 18px;
-  font-size: 14px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.condition-option.active {
-  background-color: #FFF7E6;
-  border-color: #FFD591;
-  color: #FA8C16;
-  font-weight: 600;
-}
-
-.condition-option:active {
-  transform: scale(0.95);
+.full-width {
+  width: 100%;
 }
 
 .notice-section {

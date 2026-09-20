@@ -14,9 +14,9 @@
         </div>
         <div class="card-body">
           <p class="status-text">{{ dbStatusMessage }}</p>
-          <button @click="fetchDbStatus" :disabled="loading" class="btn btn-primary">
+          <el-button type="primary" :loading="loading" @click="fetchDbStatus">
             {{ loading ? '检测中...' : '重新检测' }}
-          </button>
+          </el-button>
         </div>
       </div>
 
@@ -80,28 +80,31 @@
               <option value="orders">orders</option>
             </select>
             <input v-model.number="queryLimit" type="number" min="1" max="20" placeholder="限制条数" class="input-limit" />
-            <button @click="fetchQuery" :disabled="loading" class="btn btn-primary">查询</button>
+            <el-button type="primary" :loading="loading" @click="fetchQuery">查询</el-button>
           </div>
 
           <div v-if="queryResult" class="query-result">
             <p class="result-info">找到 {{ queryResult.rowCount }} 条记录</p>
-            <div class="result-table-wrapper">
-              <table class="result-table" v-if="queryResult.data && queryResult.data.length > 0">
-                <thead>
-                  <tr>
-                    <th v-for="key in queryResult.data[0] ? Object.keys(queryResult.data[0]) : []" :key="key">{{ key }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(row, idx) in queryResult.data" :key="idx">
-                    <td v-for="key in Object.keys(row)" :key="key">
-                      <span :title="String(row[key])">{{ formatCell(row[key]) }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <p v-else class="no-data">暂无数据</p>
-            </div>
+            <el-table
+              v-if="queryResult.data && queryResult.data.length > 0"
+              :data="queryResult.data"
+              size="small"
+              border
+              empty-text="暂无数据"
+            >
+              <el-table-column
+                v-for="key in (queryResult.data && queryResult.data[0] ? Object.keys(queryResult.data[0]) : [])"
+                :key="key"
+                :prop="key"
+                :label="key"
+                show-overflow-tooltip
+              >
+                <template #default="{ row }">
+                  <span :title="String(row[key])">{{ formatCell(row[key]) }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+            <p v-else class="no-data">暂无数据</p>
           </div>
 
           <div v-if="queryError" class="query-error">
@@ -112,10 +115,10 @@
 
       <!-- 操作栏 -->
       <div class="actions">
-        <button @click="fetchAll" :disabled="loading" class="btn btn-primary btn-large">
+        <el-button type="primary" size="large" :loading="loading" @click="fetchAll">
           {{ loading ? '检测中...' : '全部检测' }}
-        </button>
-        <a href="/" class="btn btn-secondary">返回首页</a>
+        </el-button>
+        <el-button size="large" @click="$router.push('/')">返回首页</el-button>
       </div>
     </div>
   </div>
@@ -379,45 +382,6 @@ fetchAll()
   text-align: center;
 }
 
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981), var(--color-primary-400, #34d399));
-  color: white;
-}
-
-.btn-primary:active {
-  transform: scale(0.97);
-}
-
-.btn-secondary {
-  background: #f0f0f0;
-  color: #666;
-}
-
-.btn-large {
-  padding: 14px 32px;
-  font-size: 16px;
-  border-radius: 14px;
-}
-
 .query-result {
   margin-top: 12px;
 }
@@ -426,41 +390,6 @@ fetchAll()
   font-size: 13px;
   color: #999;
   margin: 0 0 12px;
-}
-
-.result-table-wrapper {
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid #f0f0f0;
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.result-table th {
-  background: #fafafa;
-  padding: 8px 10px;
-  text-align: left;
-  color: #666;
-  font-weight: 600;
-  white-space: nowrap;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.result-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #f5f5f5;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.result-table td span {
-  cursor: help;
 }
 
 .no-data {

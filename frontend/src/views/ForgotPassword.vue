@@ -16,35 +16,31 @@
         <h3 class="step-title">验证身份</h3>
         <p class="step-desc">请输入注册时绑定的邮箱地址</p>
 
-        <form @submit.prevent="handleSendCode" class="form-group">
-          <div class="input-group">
-            <div class="input-wrapper" :class="{ focused: inputFocused, filled: account }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <input
-                type="text"
-                v-model="account"
-                placeholder="请输入绑定的邮箱地址"
-                @focus="inputFocused = true"
-                @blur="inputFocused = false"
-              />
-            </div>
-          </div>
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          size="large"
+          @submit.prevent="handleSendCode"
+        >
+          <el-form-item prop="account">
+            <el-input v-model="form.account" placeholder="请输入绑定的邮箱地址" clearable>
+              <template #prefix>
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </template>
+            </el-input>
+          </el-form-item>
 
-          <button
-            type="submit"
-            :disabled="loading || !account"
-            class="submit-btn"
-            :class="{ active: account }"
-          >
+          <el-button native-type="submit" type="primary" size="large" class="submit-btn" :loading="loading">
             {{ loading ? '发送中...' : '发送验证码' }}
-          </button>
-        </form>
+          </el-button>
+        </el-form>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+        <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="msg-alert" />
+        <el-alert v-if="successMessage" :title="successMessage" type="success" :closable="false" show-icon class="msg-alert" />
 
         <div class="back-link">
           <router-link to="/login">返回登录</router-link>
@@ -57,91 +53,84 @@
         <h3 class="step-title">重置密码</h3>
         <p class="step-desc">验证码已发送至 {{ maskedAccount }}</p>
 
-        <form @submit.prevent="handleResetPassword" class="form-group">
-          <div class="input-group">
-            <div class="input-wrapper" :class="{ focused: codeFocused, filled: verifyCode }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 1110 0v4"/>
-              </svg>
-              <input
-                type="text"
-                v-model="verifyCode"
-                placeholder="请输入验证码"
-                maxlength="6"
-                @focus="codeFocused = true"
-                @blur="codeFocused = false"
-              />
-            </div>
-          </div>
+        <el-form
+          ref="resetFormRef"
+          :model="resetForm"
+          :rules="resetRules"
+          size="large"
+          @submit.prevent="handleResetPassword"
+        >
+          <el-form-item prop="verifyCode">
+            <el-input v-model="resetForm.verifyCode" placeholder="请输入验证码" maxlength="6">
+              <template #prefix>
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 1110 0v4"/>
+                </svg>
+              </template>
+            </el-input>
+          </el-form-item>
 
-          <div class="input-group">
-            <div class="input-wrapper" :class="{ focused: newPwdFocused, filled: newPassword }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 1110 0v4"/>
-              </svg>
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="newPassword"
-                placeholder="请输入新密码（至少6位）"
-                @focus="newPwdFocused = true"
-                @blur="newPwdFocused = false"
-              />
-            </div>
-          </div>
+          <el-form-item prop="newPassword">
+            <el-input
+              v-model="resetForm.newPassword"
+              type="password"
+              placeholder="请输入新密码（至少6位）"
+              show-password
+            >
+              <template #prefix>
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 1110 0v4"/>
+                </svg>
+              </template>
+            </el-input>
+          </el-form-item>
 
-          <div class="input-group">
-            <div class="input-wrapper" :class="{ focused: confirmFocused, filled: confirmPassword }">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 1110 0v4"/>
-              </svg>
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="confirmPassword"
-                placeholder="请确认新密码"
-                @focus="confirmFocused = true"
-                @blur="confirmFocused = false"
-              />
-            </div>
-          </div>
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="resetForm.confirmPassword"
+              type="password"
+              placeholder="请确认新密码"
+              show-password
+            >
+              <template #prefix>
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/>
+                  <path d="M7 11V7a5 5 0 1110 0v4"/>
+                </svg>
+              </template>
+            </el-input>
+          </el-form-item>
 
-          <button
-            type="submit"
-            :disabled="loading || !canSubmit"
-            class="submit-btn"
-            :class="{ active: canSubmit }"
-          >
+          <el-button native-type="submit" type="primary" size="large" class="submit-btn" :loading="loading">
             {{ loading ? '重置中...' : '确认重置' }}
-          </button>
-        </form>
+          </el-button>
+        </el-form>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="msg-alert" />
 
         <div class="resend-row">
-          <button @click="handleResendCode" class="resend-btn" :disabled="countdown > 0">
+          <el-button link type="primary" :disabled="countdown > 0" @click="handleResendCode">
             {{ countdown > 0 ? `${countdown}s后重新发送` : '重新发送验证码' }}
-          </button>
+          </el-button>
         </div>
       </div>
 
       <!-- 步骤3：重置成功 -->
       <div v-if="step === 3" class="step-content success-step">
-        <div class="step-icon success-icon">✅</div>
-        <h3 class="step-title">密码重置成功</h3>
-        <p class="step-desc">请使用新密码重新登录</p>
-
-        <button @click="goToLogin" class="submit-btn active">
-          去登录
-        </button>
+        <el-result icon="success" title="密码重置成功" sub-title="请使用新密码重新登录">
+          <template #extra>
+            <el-button type="primary" size="large" class="submit-btn" @click="goToLogin">去登录</el-button>
+          </template>
+        </el-result>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { userApi } from '../services/api'
 
@@ -149,21 +138,22 @@ const router = useRouter()
 
 const step = ref(1)
 const account = ref('')
-const verifyCode = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
-const showPassword = ref(false)
 const countdown = ref(0)
 
-let countdownTimer = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
-const inputFocused = ref(false)
-const codeFocused = ref(false)
-const newPwdFocused = ref(false)
-const confirmFocused = ref(false)
+const formRef = ref()
+const resetFormRef = ref()
+
+const form = reactive({ account: account })
+const resetForm = reactive({
+  verifyCode: '',
+  newPassword: '',
+  confirmPassword: ''
+})
 
 const maskedAccount = computed(() => {
   if (!account.value) return ''
@@ -174,11 +164,30 @@ const maskedAccount = computed(() => {
   return account.value.slice(0, 3) + '****' + account.value.slice(-2)
 })
 
-const canSubmit = computed(() => {
-  return verifyCode.value.length === 6 &&
-         newPassword.value.length >= 6 &&
-         newPassword.value === confirmPassword.value
-})
+const rules = {
+  account: [
+    { required: true, message: '请输入绑定的邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+  ]
+}
+
+const resetRules = {
+  verifyCode: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 6, message: '验证码为6位', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => {
+      if (value !== resetForm.newPassword) callback(new Error('两次输入的密码不一致'))
+      else callback()
+    }, trigger: 'blur' }
+  ]
+}
 
 function goBack() {
   router.push('/login')
@@ -189,7 +198,9 @@ function goToLogin() {
 }
 
 async function handleSendCode() {
-  if (!account.value || loading.value) return
+  if (loading.value) return
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
 
   try {
     loading.value = true
@@ -231,25 +242,22 @@ function startCountdown() {
   countdownTimer = setInterval(() => {
     countdown.value--
     if (countdown.value <= 0) {
-      clearInterval(countdownTimer)
+      if (countdownTimer) clearInterval(countdownTimer)
       countdownTimer = null
     }
   }, 1000)
 }
 
 async function handleResetPassword() {
-  if (!canSubmit.value || loading.value) return
-
-  if (newPassword.value !== confirmPassword.value) {
-    errorMessage.value = '两次输入的密码不一致'
-    return
-  }
+  if (loading.value) return
+  const valid = await resetFormRef.value?.validate().catch(() => false)
+  if (!valid) return
 
   try {
     loading.value = true
     errorMessage.value = ''
 
-    await userApi.verifyAndResetPassword(account.value, verifyCode.value, newPassword.value)
+    await userApi.verifyAndResetPassword(account.value, resetForm.verifyCode, resetForm.newPassword)
 
     step.value = 3
   } catch (error) {
@@ -330,16 +338,6 @@ onUnmounted(() => {
   margin-bottom: 20px;
 }
 
-.success-icon {
-  animation: popIn 0.4s ease;
-}
-
-@keyframes popIn {
-  0% { transform: scale(0); }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
 .step-title {
   font-size: 24px;
   font-weight: 700;
@@ -353,97 +351,24 @@ onUnmounted(() => {
   margin: 0 0 32px;
 }
 
-.form-group {
-  text-align: left;
-}
-
-.input-group {
-  margin-bottom: 18px;
-}
-
-.input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background-color: #fafafa;
-  border: 2px solid transparent;
-  border-radius: 14px;
-  transition: all 0.25s ease;
-}
-
-.input-wrapper.focused {
-  background-color: #fff;
-  border-color: var(--color-primary-500, #10b981);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
-}
-
 .input-icon {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   color: #bbb;
   flex-shrink: 0;
 }
 
-.input-wrapper input {
-  flex: 1;
-  border: none;
-  background: none;
-  font-size: 16px;
-  color: #333;
-  outline: none;
-}
-
-.input-wrapper input::placeholder {
-  color: #ccc;
-}
-
 .submit-btn {
   width: 100%;
-  padding: 15px;
-  background-color: #e0e0e0;
-  color: #999;
-  border: none;
-  border-radius: 14px;
-  font-size: 17px;
   font-weight: 700;
-  cursor: not-allowed;
-  transition: all 0.3s ease;
   letter-spacing: 4px;
+  border-radius: 14px;
   margin-top: 8px;
+  --el-button-size: 48px;
 }
 
-.submit-btn.active {
-  background: linear-gradient(135deg, var(--color-primary-500, #10b981) 0%, var(--color-primary-400, #34d399) 100%);
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-}
-
-.submit-btn.active:active {
-  transform: scale(0.98);
-}
-
-.error-message {
+.msg-alert {
   margin-top: 16px;
-  padding: 12px;
-  background-color: #FFF1F0;
-  border: 1px solid #FFCCC7;
-  border-radius: 10px;
-  color: #FF4D4F;
-  font-size: 13px;
-  text-align: center;
-}
-
-.success-message {
-  margin-top: 16px;
-  padding: 12px;
-  background-color: #F6FFED;
-  border: 1px solid #B7EB8F;
-  border-radius: 10px;
-  color: #52C41A;
-  font-size: 13px;
-  text-align: center;
 }
 
 .back-link {
@@ -455,6 +380,7 @@ onUnmounted(() => {
   color: var(--color-primary-500, #10b981);
   font-size: 14px;
   font-weight: 500;
+  text-decoration: none;
 }
 
 .resend-row {
@@ -462,21 +388,7 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.resend-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary-500, #10b981);
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.resend-btn:disabled {
-  color: #ccc;
-  cursor: not-allowed;
-}
-
-.success-step .step-desc {
-  margin-bottom: 40px;
+.success-step {
+  padding-top: 24px;
 }
 </style>

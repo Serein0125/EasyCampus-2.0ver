@@ -1,5 +1,10 @@
 <template>
-  <div class="activity-card" @click="emit('click', activity.id)">
+  <el-card
+    class="activity-card"
+    shadow="hover"
+    :body-style="{ padding: '0px' }"
+    @click="emit('click', activity.id)"
+  >
     <div class="card-cover">
       <img
         v-if="activity.coverImage"
@@ -38,7 +43,7 @@
         <span v-if="activity.location" class="location-text">{{ activity.location }}</span>
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <script setup lang="ts">
@@ -66,25 +71,6 @@ function formatDate(dateStr) {
 </script>
 
 <style scoped>
-.activity-card {
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  cursor: pointer;
-  transition: transform var(--duration-normal) var(--ease-out),
-              box-shadow var(--duration-normal) var(--ease-out);
-}
-
-.activity-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card-hover);
-}
-
-.activity-card:active {
-  transform: translateY(-2px) scale(0.98);
-}
-
 .card-cover {
   position: relative;
   width: 100%;
@@ -190,5 +176,25 @@ function formatDate(dateStr) {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
+}
+</style>
+
+<style>
+/* el-card 根节点由 EP 渲染，scoped 无法命中，用全局类兜底（圆角/悬停微动效） */
+.activity-card.el-card {
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.activity-card.el-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.activity-card.el-card:active {
+  transform: translateY(-2px) scale(0.98);
 }
 </style>

@@ -1,42 +1,32 @@
 <template>
   <div class="tag-input-wrapper">
-    <div class="tags-display">
-      <span v-for="(tag, idx) in tags" :key="idx" class="tag-chip">
-        {{ tag }}
-        <button class="tag-remove" @click="removeTag(idx)">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </span>
-    </div>
-    <div v-if="tags.length < maxTags" class="tag-input-row">
-      <input
-        :value="inputValue"
-        @input="onInput"
-        @keydown.enter.prevent="addTag(inputValue)"
-        @keydown.backspace="onBackspace"
-        @focus="showSuggestions = true"
-        @blur="onBlur"
-        :placeholder="tags.length === 0 ? placeholder : '添加标签...'"
-        class="tag-input"
-        maxlength="15"
-      />
-    </div>
-    <div v-if="showSuggestions && filteredSuggestions.length > 0 && tags.length < maxTags" class="suggestions-dropdown">
-      <div
-        v-for="s in filteredSuggestions"
-        :key="s"
-        class="suggestion-item"
-        @mousedown.prevent="addTag(s)"
-      >
-        {{ s }}
-      </div>
-    </div>
+    <el-select
+      ref="selectRef"
+      v-model="tags"
+      multiple
+      filterable
+      allow-create
+      default-first-option
+      :multiple-limit="maxTags"
+      :placeholder="tags.length === 0 ? placeholder : '添加标签...'"
+      class="tag-input-select"
+      @change="onModelChange"
+      @blur="commitPendingInput"
+    >
+      <el-option v-for="s in filteredSuggestions" :key="s" :label="s" :value="s" />
+    </el-select>
     <p v-if="tags.length >= maxTags" class="tag-hint">已添加{{ maxTags }}个标签，达到上限</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type PropType } from 'vue'
+import { computed, ref, type PropType } from 'vue'
+
+// 单个标签的最大长度（迁移前原生输入框的限制值）
+const MAX_TAG_LENGTH = 15
+
+// el-select 根节点由 EP 渲染，需要用它在失焦时读取输入框里的残留文本
+const selectRef = ref<{ $el?: HTMLElement } | null>(null)
 
 const props = defineProps({
   presetTags: { type: Array as PropType<string[]>, default: () => [] },
@@ -46,173 +36,56 @@ const props = defineProps({
 
 const tags = defineModel<string[]>({ default: () => [] })
 
-const inputValue = ref('')
-const showSuggestions = ref(false)
-
+// 仅展示未被选中的预设标签，关键词过滤由 el-select filterable 内部完成
 const filteredSuggestions = computed(() => {
-  const kw = inputValue.value.trim().toLowerCase()
-  if (!kw) return props.presetTags
-  return props.presetTags.filter(t => t.toLowerCase().includes(kw) && !tags.value.includes(t))
+  return props.presetTags.filter((t) => !(tags.value || []).includes(t))
 })
 
-function sanitize(val) {
-  return val.replace(/[<>"'&\\/]/g, '').trim()
+function sanitize(val: string) {
+  const cleaned = val.replace(/[<>"'&\\/]/g, '').trim()
+  // 超长标签直接拒绝（迁移前是 return 不添加），不做静默截断
+  return cleaned.length > MAX_TAG_LENGTH ? '' : cleaned
 }
 
-function addTag(raw) {
-  const val = sanitize(raw)
-  if (!val || val.length < 1 || val.length > 15) return
-  if (tags.value.length >= props.maxTags) return
-  if (tags.value.includes(val)) {
-    inputValue.value = ''
-    showSuggestions.value = false
-    return
+/** 按中英文逗号拆成多个标签，恢复迁移前「逗号批量输入」的行为 */
+function splitTags(raw: string): string[] {
+  return raw.split(/[,，]/).map(sanitize).filter(Boolean)
+}
+
+// allow-create 生成的标签会绕过输入限制，且一次可能输入多个（逗号分隔），统一在这里清洗、拆分、去重
+function onModelChange() {
+  const cleaned = [...new Set((tags.value || []).flatMap((t) => splitTags(t)))].slice(0, props.maxTags)
+  const same =
+    cleaned.length === tags.value.length && cleaned.every((t, i) => t === tags.value[i])
+  if (!same) tags.value = cleaned
+}
+
+// allow-create 只在回车/选中时落值，输入后直接点外部会丢弃。
+// 这里在失焦时把输入框残留文本补提交，恢复迁移前「失焦自动添加」的行为
+function commitPendingInput() {
+  const input = selectRef.value?.$el?.querySelector('input')
+  const raw = input?.value
+  if (!raw) return
+  const pending = splitTags(raw).filter((t) => !(tags.value || []).includes(t))
+  if (pending.length) {
+    tags.value = [...(tags.value || []), ...pending].slice(0, props.maxTags)
+    onModelChange()
   }
-  const newTags = [...tags.value, val]
-  tags.value = newTags
-  inputValue.value = ''
-  showSuggestions.value = false
-}
-
-function removeTag(idx) {
-  const newTags = tags.value.filter((_, i) => i !== idx)
-  tags.value = newTags
-}
-
-function onInput(e) {
-  const raw = e.target.value
-  if (raw.endsWith(',')) {
-    const parts = raw.split(',')
-    parts.filter(p => p.trim()).forEach(p => addTag(p.trim()))
-    inputValue.value = ''
-    return
-  }
-  const cleaned = raw.replace(/[<>"'&\\]/g, '')
-  inputValue.value = cleaned
-  if (cleaned.trim()) showSuggestions.value = true
-}
-
-function onBackspace() {
-  if (inputValue.value === '' && tags.value.length > 0) {
-    removeTag(tags.value.length - 1)
-  }
-}
-
-function onBlur() {
-  setTimeout(() => {
-    if (inputValue.value.trim()) {
-      addTag(inputValue.value)
-    }
-    showSuggestions.value = false
-  }, 150)
+  input.value = ''
 }
 </script>
 
 <style scoped>
-.tag-input-wrapper {
-  position: relative;
-}
-
-.tags-display {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  background: linear-gradient(135deg, #FFF7E6, #FFF0D9);
-  border: 1px solid #FFD591;
-  border-radius: 14px;
-  font-size: 13px;
-  color: #FA8C16;
-  font-weight: 500;
-}
-
-.tag-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: none;
-  background: none;
-  color: #FFB366;
-  cursor: pointer;
-  padding: 0;
-  border-radius: 50%;
-  transition: all 0.15s ease;
-}
-
-.tag-remove:hover {
-  color: #FF4D4F;
-  background: rgba(255, 77, 79, 0.1);
-}
-
-.tag-input-row {
-  display: flex;
-}
-
-.tag-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #333;
-  outline: none;
-  background: #fafafa;
-  transition: all 0.25s ease;
-}
-
-.tag-input:focus {
-  border-color: var(--color-primary-500, #10b981);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
-}
-
-.tag-input::placeholder {
-  color: #ccc;
-}
-
 .tag-hint {
   font-size: 12px;
   color: #999;
   margin-top: 6px;
 }
+</style>
 
-.suggestions-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  max-height: 180px;
-  overflow-y: auto;
-  margin-top: 4px;
-}
-
-.suggestion-item {
-  padding: 10px 14px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.suggestion-item:hover {
-  background: #FFF7E6;
-}
-
-.suggestion-item:active {
-  background: #FFE7BA;
+<style>
+/* el-select 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.tag-input-select {
+  width: 100%;
 }
 </style>

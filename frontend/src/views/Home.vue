@@ -1,82 +1,47 @@
 <template>
   <div class="home-page">
-    <!-- 下拉刷新指示器 -->
-    <div class="pull-refresh-indicator" :style="{ transform: `translateY(${pullDistance}px)`, transition: isRefreshing ? 'none' : 'transform 0.3s ease' }">
-      <div v-if="pullDistance > 0 || isRefreshing" class="pull-indicator-inner">
-        <div class="pull-spinner" :class="{ spinning: isRefreshing }"></div>
-        <span class="pull-text">{{ isRefreshing ? '刷新中...' : canTrigger ? '松手刷新' : '下拉刷新' }}</span>
-      </div>
-    </div>
-
     <!-- 有广告Banner时：显示轮播 -->
-    <section v-if="banners.length > 0" class="banner-section" :class="{ 'banner-desktop': !isMobile, 'banner-mobile': isMobile }" @wheel.prevent="!isMobile && onBannerWheel">
+    <section v-if="banners.length > 0" class="banner-section" @wheel.prevent="onBannerWheel">
       <!-- 桌面端：无限循环轮播 -->
-      <template v-if="!isMobile">
-        <div class="banner-track"
-          :style="{ transform: `translateX(-${displayIndex * 100}%)`, transition: isWrapping ? 'none' : undefined }"
-          @transitionend="onTrackTransitionEnd">
-          <div
-            v-for="(banner, index) in displayBanners"
-            :key="index"
-            class="banner-slide"
-          >
-            <img
-              v-if="banner.coverImage"
-              :src="banner.coverImage"
-              class="banner-cover"
-              @error="onCoverError"
-              alt=""
-            />
-            <div class="banner-overlay"></div>
-            <div class="banner-content">
-              <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
-              <h2 class="banner-title">{{ banner.title }}</h2>
-              <p class="banner-subtitle">{{ banner.subtitle }}</p>
-              <button class="banner-cta" @click="handleBannerCta(banner)">{{ banner.cta }}</button>
-            </div>
+      <div class="banner-track"
+        :style="{ transform: `translateX(-${displayIndex * 100}%)`, transition: isWrapping ? 'none' : undefined }"
+        @transitionend="onTrackTransitionEnd">
+        <div
+          v-for="(banner, index) in displayBanners"
+          :key="index"
+          class="banner-slide"
+        >
+          <img
+            v-if="banner.coverImage"
+            :src="banner.coverImage"
+            class="banner-cover"
+            @error="onCoverError"
+            alt=""
+          />
+          <div class="banner-overlay"></div>
+          <div class="banner-content">
+            <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
+            <h2 class="banner-title">{{ banner.title }}</h2>
+            <p class="banner-subtitle">{{ banner.subtitle }}</p>
+            <button class="banner-cta" @click="handleBannerCta(banner)">{{ banner.cta }}</button>
           </div>
         </div>
-        <button v-if="banners.length > 1" class="banner-arrow banner-arrow--prev" @click="slideBackward">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button v-if="banners.length > 1" class="banner-arrow banner-arrow--next" @click="slideForward">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-        <div v-if="banners.length > 1" class="banner-dots">
-          <span
-            v-for="(_, index) in banners"
-            :key="index"
-            class="banner-dot"
-            :class="{ active: normalizedBanner === index }"
-            @click="goToBanner(index)"
-          ></span>
-        </div>
-      </template>
-
-      <!-- 移动端：横向滑动卡片 -->
-      <template v-if="isMobile">
-        <div class="mobile-banner-scroll">
-          <div
-            v-for="(banner, index) in banners"
-            :key="index"
-            class="mobile-banner-card"
-            @click="handleBannerCta(banner)"
-          >
-            <img
-              v-if="banner.coverImage"
-              :src="banner.coverImage"
-              class="mobile-banner-cover"
-              @error="onCoverError"
-              alt=""
-            />
-            <div class="mobile-banner-overlay">
-              <span v-if="banner.isAd" class="banner-ad-badge">推广</span>
-              <h3 class="mobile-banner-title">{{ banner.title }}</h3>
-              <p class="mobile-banner-subtitle">{{ banner.subtitle }}</p>
-            </div>
-          </div>
-        </div>
-      </template>
+      </div>
+      <button v-if="banners.length > 1" class="banner-arrow banner-arrow--prev" @click="slideBackward">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button v-if="banners.length > 1" class="banner-arrow banner-arrow--next" @click="slideForward">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div v-if="banners.length > 1" class="banner-dots">
+        <span
+          v-for="(_, index) in banners"
+          :key="index"
+          class="banner-dot"
+          :class="{ active: normalizedBanner === index }"
+          @click="goToBanner(index)"
+        ></span>
+      </div>
     </section>
 
     <!-- 无广告Banner时：显示广告推流占位海报 -->
@@ -218,7 +183,6 @@ import { useAuthStore } from '../store/auth'
 import { feedApi, postApi } from '../services/api'
 import PostCard from '../components/PostCard.vue'
 import ProductCard from '../components/ProductCard.vue'
-import { usePullRefresh } from '../use/usePullRefresh'
 
 const route = useRoute()
 const router = useRouter()
@@ -263,7 +227,6 @@ const normalizedBanner = computed(() => {
   if (di === n + 1) return 0
   return di - 1
 })
-const isMobile = ref(window.innerWidth <= 768)
 const isFading = ref(false)
 
 const feedItems = ref([])
@@ -309,7 +272,6 @@ onMounted(() => {
   fetchAdBanners()
   setupScrollObserver()
   startBannerAutoplay()
-  window.addEventListener('resize', onResize)
 })
 
 onUnmounted(() => {
@@ -318,12 +280,7 @@ onUnmounted(() => {
     scrollHandler = null
   }
   stopBannerAutoplay()
-  window.removeEventListener('resize', onResize)
 })
-
-function onResize() {
-  isMobile.value = window.innerWidth <= 768
-}
 
 function startBannerAutoplay() {
   stopBannerAutoplay()
@@ -516,13 +473,7 @@ async function loadFeed(isLoadMore = false) {
   }
 }
 
-// 下拉刷新：重新加载第一页数据
-const { isRefreshing, pullDistance, canTrigger } = usePullRefresh(async () => {
-  currentPage.value = 1
-  hasMore.value = true
-  await loadFeed()
-})
-
+// 下拉刷新已移除（H5 移动端特化），滚动到底自动加载更多保持
 function loadMoreItems() {
   if (!hasMore.value || loadingMore.value || loadError.value) return
   currentPage.value++
@@ -788,95 +739,6 @@ function trackBehavior(targetType, targetId) {
   width: 24px;
   background: #ffffff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-/* ===== 移动端 Banner：横向滑动卡片 ===== */
-.banner-mobile {
-  aspect-ratio: auto;
-  min-height: 160px;
-  max-height: 200px;
-  border-radius: 0;
-  cursor: default;
-  background: transparent;
-}
-
-.banner-mobile .banner-track {
-  display: none; /* 隐藏桌面端的 track */
-}
-
-.mobile-banner-scroll {
-  display: flex;
-  gap: var(--space-3, 0.75rem);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  /* 隐藏滚动条 */
-  scrollbar-width: none;
-}
-.mobile-banner-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.mobile-banner-card {
-  position: relative;
-  flex-shrink: 0;
-  width: 80vw;
-  max-width: 320px;
-  height: 160px;
-  border-radius: var(--radius-xl, 14px);
-  overflow: hidden;
-  scroll-snap-align: start;
-  cursor: pointer;
-  /* fallback 渐变背景 */
-  background: linear-gradient(135deg, #059669 0%, #10b981 40%, #34d399 100%);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
-}
-.mobile-banner-card:active {
-  transform: scale(0.97);
-}
-
-.mobile-banner-cover {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 1;
-}
-
-.mobile-banner-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-  padding: var(--space-5, 1.25rem) var(--space-3, 0.75rem) var(--space-3, 0.75rem);
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.1) 70%, transparent 100%);
-}
-
-.mobile-banner-title {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: var(--text-base, 0.9375rem);
-  font-weight: var(--font-bold, 700);
-  color: #ffffff;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mobile-banner-subtitle {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: var(--text-xs, 0.75rem);
-  color: rgba(255, 255, 255, 0.75);
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .feed-content {
@@ -1310,39 +1172,6 @@ function trackBehavior(targetType, targetId) {
   font-size: var(--text-xs, 0.6875rem);
   color: var(--color-text-tertiary, #9ca3af);
   white-space: nowrap;
-}
-
-/* 下拉刷新指示器 */
-.pull-refresh-indicator {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  z-index: 5;
-}
-.pull-indicator-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-tertiary, #9ca3af);
-  font-size: 13px;
-}
-.pull-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--color-border-light, #e5e7eb);
-  border-top-color: var(--color-primary-500, #10b981);
-  border-radius: 50%;
-}
-.pull-spinner.spinning {
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

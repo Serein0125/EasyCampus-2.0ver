@@ -1,7 +1,9 @@
 <template>
-  <button class="back-btn" @click="goBack">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
-  </button>
+  <el-button class="app-back-btn" circle text @click="goBack" aria-label="返回">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="15,18 9,12 15,6" />
+    </svg>
+  </el-button>
 </template>
 
 <script setup lang="ts">
@@ -22,23 +24,12 @@ function goBack() {
 }
 </script>
 
-<style scoped>
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+<style>
+/* el-button 根节点由 EP 渲染，scoped 难以稳定命中，用全局类兜底。
+   类名加 app- 前缀避免与各视图自己的 .back-btn（文字型"取消"按钮等）互相污染 */
+.app-back-btn {
   width: 36px;
   height: 36px;
-  border: none;
-  background: none;
-  color: var(--color-text-primary, #333);
-  cursor: pointer;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.back-btn:active {
-  background: var(--color-bg-secondary, #f0f2f5);
+  padding: 0;
 }
 </style>

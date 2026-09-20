@@ -36,36 +36,40 @@
     </div>
 
     <main v-else-if="post" class="detail-content">
-      <section v-if="postImages.length > 0" class="image-gallery">
-        <div class="gallery-grid" :class="{ single: postImages.length === 1, multi: postImages.length > 1 }">
-          <div v-for="(img, idx) in postImages" :key="idx" class="gallery-item" @click="previewImage(img)">
-            <img :src="img" loading="lazy" class="gallery-img" @error="onImageError" />
+      <el-card v-if="postImages.length > 0" shadow="never" class="gallery-card">
+        <section class="image-gallery">
+          <div class="gallery-grid" :class="{ single: postImages.length === 1, multi: postImages.length > 1 }">
+            <div v-for="(img, idx) in postImages" :key="idx" class="gallery-item" @click="previewImage(img)">
+              <img :src="img" loading="lazy" class="gallery-img" @error="onImageError" />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </el-card>
 
-      <section class="text-section">
-        <h1 class="detail-title">
-          <span v-if="post.isAd" class="ad-tag">广告</span>
-          {{ post.title }}
-        </h1>
-        <div v-if="postTags.length" class="detail-tags">
-          <span v-for="tag in postTags" :key="tag" class="tag-hashtag">{{ tag }}</span>
-        </div>
-        <div v-if="isAdmin" class="admin-actions">
-          <button class="admin-btn" :class="{ active: post.isPinned }" @click="togglePin">
-            {{ post.isPinned ? '取消置顶' : '置顶' }}
-          </button>
-          <button class="admin-btn" :class="{ active: post.isEssence }" @click="toggleEssence">
-            {{ post.isEssence ? '取消加精' : '加精' }}
-          </button>
-        </div>
-        <div v-if="post.userCampus" class="user-campus-info">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#999" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
-          <span>发布者校区：{{ post.userCampus }}</span>
-        </div>
-        <p class="detail-body" v-html="renderedContent"></p>
-      </section>
+      <el-card shadow="never" class="text-card">
+        <section class="text-section">
+          <h1 class="detail-title">
+            <span v-if="post.isAd" class="ad-tag">广告</span>
+            {{ post.title }}
+          </h1>
+          <div v-if="postTags.length" class="detail-tags">
+            <span v-for="tag in postTags" :key="tag" class="tag-hashtag">{{ tag }}</span>
+          </div>
+          <div v-if="isAdmin" class="admin-actions">
+            <button class="admin-btn" :class="{ active: post.isPinned }" @click="togglePin">
+              {{ post.isPinned ? '取消置顶' : '置顶' }}
+            </button>
+            <button class="admin-btn" :class="{ active: post.isEssence }" @click="toggleEssence">
+              {{ post.isEssence ? '取消加精' : '加精' }}
+            </button>
+          </div>
+          <div v-if="post.userCampus" class="user-campus-info">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#999" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+            <span>发布者校区：{{ post.userCampus }}</span>
+          </div>
+          <p class="detail-body" v-html="renderedContent"></p>
+        </section>
+      </el-card>
 
       <section class="comment-section-wrapper">
         <CommentSection :target-id="post.id" :target-type="'post'" :author-id="post.userId" :initial-comments="[]" />
@@ -455,9 +459,9 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
   padding-top: 56px;
 }
 
+.gallery-card :deep(.el-card__body) { padding: 0; }
 .image-gallery {
   background: #FFFFFF;
-  padding: 0;
 }
 
 .gallery-grid {
@@ -485,9 +489,9 @@ function goToUser() { if (post.value?.userId) router.push(`/users/${post.value.u
 .gallery-grid.multi .gallery-item { aspect-ratio: 1/1; }
 .gallery-grid.multi .gallery-img { height: 100%; }
 
+.text-card :deep(.el-card__body) { padding: 16px; }
 .text-section {
   background: #FFFFFF;
-  padding: 16px;
   margin-top: 0;
 }
 

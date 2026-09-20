@@ -99,7 +99,7 @@
       <main class="menu-list" v-if="isAuthenticated">
         <section class="menu-group">
           <div class="menu-group-title">快捷操作</div>
-          <div class="menu-group-body">
+          <el-card shadow="never" class="menu-card">
             <div class="menu-item highlight" @click="showPublishSheet = true">
               <span class="menu-icon publish-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -112,12 +112,12 @@
                 <polyline points="9,18 15,12 9,6"/>
               </svg>
             </div>
-          </div>
+          </el-card>
         </section>
 
         <section class="menu-group">
           <div class="menu-group-title">我的交易</div>
-          <div class="menu-group-body">
+          <el-card shadow="never" class="menu-card">
             <router-link to="/my-products" class="menu-item">
               <span class="menu-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -160,12 +160,12 @@
                 <polyline points="9,18 15,12 9,6"/>
               </svg>
             </router-link>
-          </div>
+          </el-card>
         </section>
 
         <section class="menu-group">
           <div class="menu-group-title">其他</div>
-          <div class="menu-group-body">
+          <el-card shadow="never" class="menu-card">
             <button @click="goToSettings" class="menu-item">
               <span class="menu-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -192,11 +192,11 @@
                 <polyline points="9,18 15,12 9,6"/>
               </svg>
             </a>
-          </div>
+          </el-card>
         </section>
 
         <section class="menu-group">
-          <div class="menu-group-body">
+          <el-card shadow="never" class="menu-card">
             <button @click="handleLogout" class="menu-item danger">
               <span class="menu-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -207,98 +207,48 @@
               </span>
               <span class="menu-text">退出登录</span>
             </button>
-          </div>
+          </el-card>
         </section>
 
         <p class="version-info">易校EasyCampus v1.0.0</p>
       </main>
     </div>
 
-    <Teleport to="body">
-      <div v-if="showLogoutConfirm" class="modal-overlay" @click="cancelLogout">
-        <div class="modal-content" @click.stop>
-          <div class="modal-icon-wrap modal-icon-warn">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <h3 class="modal-title">确定要退出登录吗？</h3>
-          <p class="modal-desc">退出后需要重新登录才能使用完整功能</p>
-          <div class="modal-actions">
-            <button @click="cancelLogout" class="modal-btn cancel-btn">取消</button>
-            <button @click="confirmLogout" class="modal-btn confirm-btn">确定退出</button>
-          </div>
+    <el-dialog v-model="showAbout" title="关于我们" width="420px" append-to-body>
+      <div class="about-modal-body">
+        <div class="about-logo">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="16" fill="url(#about-grad)"/>
+            <path d="M28 16c-5.52 0-10 3.36-10 7.5v2.5h20v-2.5c0-4.14-4.48-7.5-10-7.5z" fill="white" fill-opacity="0.9"/>
+            <circle cx="28" cy="16" r="5" fill="white" fill-opacity="0.9"/>
+            <path d="M18 26v5c0 4.14 4.48 7.5 10 7.5s10-3.36 10-7.5v-5H18z" fill="white" fill-opacity="0.7"/>
+            <defs>
+              <linearGradient id="about-grad" x1="0" y1="0" x2="56" y2="56">
+                <stop stop-color="#10b981"/>
+                <stop offset="1" stop-color="#047857"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2 class="about-title">易校EasyCampus</h2>
+        <p class="about-version">版本 1.0.0</p>
+        <div class="about-desc">
+          <p>一个专为高校学生打造的二手物品交易平台，让闲置物品流转起来，倡导绿色环保的校园生活方式。</p>
+        </div>
+        <div class="about-features">
+          <div class="feature-item"><span class="feature-icon">🔒</span><span>安全交易</span></div>
+          <div class="feature-item"><span class="feature-icon">💬</span><span>即时沟通</span></div>
+          <div class="feature-item"><span class="feature-icon">📦</span><span>便捷发布</span></div>
+          <div class="feature-item"><span class="feature-icon">🌱</span><span>绿色环保</span></div>
+        </div>
+        <div class="about-info">
+          <p>如有问题或建议，请联系：support@campus2c.com</p>
         </div>
       </div>
-    </Teleport>
-
-    <Teleport to="body">
-      <div v-if="showAbout" class="modal-overlay" @click="showAbout = false">
-        <div class="modal-content about-modal" @click.stop>
-          <div class="about-logo">
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-              <rect width="56" height="56" rx="16" fill="url(#about-grad)"/>
-              <path d="M28 16c-5.52 0-10 3.36-10 7.5v2.5h20v-2.5c0-4.14-4.48-7.5-10-7.5z" fill="white" fill-opacity="0.9"/>
-              <circle cx="28" cy="16" r="5" fill="white" fill-opacity="0.9"/>
-              <path d="M18 26v5c0 4.14 4.48 7.5 10 7.5s10-3.36 10-7.5v-5H18z" fill="white" fill-opacity="0.7"/>
-              <defs>
-                <linearGradient id="about-grad" x1="0" y1="0" x2="56" y2="56">
-                  <stop stop-color="#10b981"/>
-                  <stop offset="1" stop-color="#047857"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <h2 class="about-title">易校EasyCampus</h2>
-          <p class="about-version">版本 1.0.0</p>
-          <div class="about-desc">
-            <p>一个专为高校学生打造的二手物品交易平台，让闲置物品流转起来，倡导绿色环保的校园生活方式。</p>
-          </div>
-          <div class="about-features">
-            <div class="feature-item">
-              <span class="feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </span>
-              <span>安全交易</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </span>
-              <span>即时沟通</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                  <line x1="12" y1="18" x2="12.01" y2="18"/>
-                </svg>
-              </span>
-              <span>便捷发布</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75"/>
-                </svg>
-              </span>
-              <span>绿色环保</span>
-            </div>
-          </div>
-          <div class="about-info">
-            <p>如有问题或建议，请联系：support@campus2c.com</p>
-          </div>
-          <button @click="showAbout = false" class="about-close-btn">我知道了</button>
-        </div>
-      </div>
-    </Teleport>
+      <template #footer>
+        <el-button type="primary" @click="showAbout = false">我知道了</el-button>
+      </template>
+    </el-dialog>
 
     <PublishActionSheet :visible="showPublishSheet" @close="showPublishSheet = false" />
   </div>
@@ -346,7 +296,6 @@ const myOrgs = ref([])
 
 const statsLoading = ref(true)
 const showAbout = ref(false)
-const showLogoutConfirm = ref(false)
 const showPublishSheet = ref(false)
 const avatarInput = ref(null)
 
@@ -479,17 +428,11 @@ function goToSettings() {
   router.push('/settings')
 }
 
-function handleLogout() {
-  showLogoutConfirm.value = true
-}
-
-function confirmLogout() {
-  showLogoutConfirm.value = false
-  authStore.logout()
-}
-
-function cancelLogout() {
-  showLogoutConfirm.value = false
+async function handleLogout() {
+  const ok = await toast.showConfirm('确定要退出登录吗？')
+  if (ok) {
+    authStore.logout()
+  }
 }
 
 function goToLogin() {
@@ -833,12 +776,14 @@ function goToRegister() {
   margin-bottom: var(--space-2);
 }
 
-.menu-group-body {
-  background-color: var(--color-bg-primary);
+.menu-card {
   border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
   border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card);
+}
+
+.menu-card :deep(.el-card__body) {
+  padding: 0;
 }
 
 .menu-item {
@@ -966,117 +911,8 @@ function goToRegister() {
   padding-bottom: var(--space-4);
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-5);
-  animation: fadeIn var(--duration-normal) var(--ease-out);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-content {
-  background-color: var(--color-bg-primary);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-8) var(--space-6);
-  max-width: 360px;
-  width: 100%;
+.about-modal-body {
   text-align: center;
-  box-shadow: var(--shadow-xl);
-  animation: slideUp var(--duration-slow) var(--ease-spring);
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.modal-icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--space-5);
-}
-
-.modal-icon-warn {
-  background-color: var(--color-amber-50);
-  color: var(--color-amber-500);
-}
-
-.modal-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-2);
-}
-
-.modal-desc {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--space-6);
-  line-height: var(--leading-relaxed);
-}
-
-.modal-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.modal-btn {
-  flex: 1;
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
-  border: none;
-  font-family: var(--font-sans);
-}
-
-.cancel-btn {
-  background-color: var(--color-gray-100);
-  color: var(--color-text-secondary);
-}
-
-.cancel-btn:hover {
-  background-color: var(--color-gray-200);
-}
-
-.cancel-btn:active {
-  transform: scale(0.97);
-}
-
-.confirm-btn {
-  background: var(--gradient-rose);
-  color: white;
-  box-shadow: var(--shadow-rose);
-}
-
-.confirm-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(244, 63, 94, 0.3);
-}
-
-.confirm-btn:active {
-  transform: scale(0.97);
-}
-
-.about-modal {
-  max-width: 400px;
-  padding: var(--space-8) var(--space-6);
 }
 
 .about-logo {
@@ -1120,6 +956,7 @@ function goToRegister() {
 .feature-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
   padding: var(--space-2_5) var(--space-3);
   background: var(--color-primary-50);
@@ -1135,40 +972,15 @@ function goToRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary-500);
 }
 
 .about-info {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-2);
 }
 
 .about-info p {
   font-size: var(--text-xs);
   color: var(--color-text-tertiary);
   margin: 0;
-}
-
-.about-close-btn {
-  width: 100%;
-  padding: var(--space-3) var(--space-5);
-  background: var(--gradient-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-lg);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  box-shadow: var(--shadow-green);
-  transition: all var(--duration-normal) var(--ease-out);
-  font-family: var(--font-sans);
-}
-
-.about-close-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-green-lg);
-}
-
-.about-close-btn:active {
-  transform: scale(0.97);
 }
 </style>

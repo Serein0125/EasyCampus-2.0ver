@@ -6,7 +6,7 @@ declare module 'vue-router' {
   interface RouteMeta {
     title?: string       // 页面标题，守卫里拼成 document.title
     requiresAuth?: boolean // 是否需要登录
-    showTabBar?: boolean  // 是否显示顶部 AppHeader（主 tab 页为 true）
+    showHeader?: boolean  // 是否显示顶部 AppHeader（主 tab 页为 true）
     transition?: string   // 页面切换动画名（'slide' 为详情页左右滑入）
   }
 }
@@ -18,13 +18,14 @@ const routes = [
     path: '/',
     name: 'Home',
     component: () => import('../views/Home.vue'),
-    meta: { title: '首页', showTabBar: true }
+    meta: { title: '首页', showHeader: true }
   },
   {
     path: '/login',
     name: 'Login',
     component: () => import('../views/Login.vue'),
-    meta: { title: '登录' }
+    // fullBleed：脱离 App.vue 内容容器的 1200px 限制，让登录页左右分屏铺满整屏
+    meta: { title: '登录', fullBleed: true }
   },
   {
     path: '/register',
@@ -48,13 +49,13 @@ const routes = [
     path: '/products',
     name: 'Products',
     component: () => import('../views/Products.vue'),
-    meta: { title: '商品列表', showTabBar: true }
+    meta: { title: '商品列表', showHeader: true }
   },
   {
     path: '/products/:id',
     name: 'ProductDetail',
     component: () => import('../views/ProductDetail.vue'),
-    meta: { title: '商品详情', transition: 'slide', showTabBar: false }
+    meta: { title: '商品详情', transition: 'slide', showHeader: false }
   },
   {
     path: '/products/create',
@@ -69,7 +70,7 @@ const routes = [
     path: '/categories',
     name: 'Categories',
     component: () => import('../views/Categories.vue'),
-    meta: { title: '分类浏览', showTabBar: true }
+    meta: { title: '分类浏览', showHeader: true }
   },
   {
     path: '/messages',
@@ -78,7 +79,7 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: '消息',
-      showTabBar: true
+      showHeader: true
     }
   },
   // 聊天室页面（核心新功能）
@@ -103,7 +104,7 @@ const routes = [
     path: '/community',
     name: 'Community',
     component: () => import('../views/CommunityPage.vue'),
-    meta: { title: '社区', showTabBar: true }
+    meta: { title: '社区', showHeader: true }
   },
   {
     path: '/community/posts/create',
@@ -115,7 +116,7 @@ const routes = [
     path: '/community/posts/:id',
     name: 'PostDetail',
     component: () => import('../views/PostDetailPage.vue'),
-    meta: { title: '帖子详情', transition: 'slide', showTabBar: false }
+    meta: { title: '帖子详情', transition: 'slide', showHeader: false }
   },
   {
     path: '/ads/create',
@@ -127,7 +128,7 @@ const routes = [
     path: '/boards',
     name: 'BoardsDiscover',
     component: () => import('../views/BoardsDiscoverPage.vue'),
-    meta: { title: '兴趣圈子', showTabBar: true }
+    meta: { title: '兴趣圈子', showHeader: true }
   },
   {
     path: '/boards/:id',
@@ -153,7 +154,7 @@ const routes = [
     component: () => import('../views/Profile.vue'),
     meta: {
       title: '我的',
-      showTabBar: true
+      showHeader: true
     }
   },
   {
@@ -224,7 +225,7 @@ const routes = [
     path: '/activities',
     name: 'Activities',
     component: () => import('../views/Activities.vue'),
-    meta: { title: '活动', showTabBar: true }
+    meta: { title: '活动', showHeader: true }
   },
   {
     path: '/activities/:id',

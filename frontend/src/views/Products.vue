@@ -1,44 +1,9 @@
 <template>
   <div class="products-page">
-    <!-- 下拉刷新指示器 -->
-    <div class="pull-refresh-indicator" :style="{ transform: `translateY(${pullDistance}px)`, transition: isRefreshing ? 'none' : 'transform 0.3s ease' }">
-      <div v-if="pullDistance > 0 || isRefreshing" class="pull-indicator-inner">
-        <div class="pull-spinner" :class="{ spinning: isRefreshing }"></div>
-        <span class="pull-text">{{ isRefreshing ? '刷新中...' : canTrigger ? '松手刷新' : '下拉刷新' }}</span>
-      </div>
-    </div>
-    <header class="mobile-header">
-      <button @click="$router.back()" class="back-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="15,18 9,12 15,6"/>
-        </svg>
-      </button>
-      <div class="search-bar" :class="{ focused: searchFocused }">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          type="text"
-          v-model="searchKeyword"
-          class="search-input"
-          placeholder="搜索好物..."
-          @keyup.enter="handleSearch"
-          @focus="searchFocused = true"
-          @blur="searchFocused = false"
-        />
-        <button v-if="searchKeyword" @click="searchKeyword = ''; handleSearch()" class="clear-btn">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-            <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-          </svg>
-        </button>
-      </div>
-    </header>
-
     <section class="filter-section">
       <div class="filter-tabs">
         <button
-          v-for="tab in filterTabs"
+          v-for="tab in otherFilterTabs"
           :key="tab.key"
           @click="onFilterClick(tab.key)"
           :class="['filter-tab', { active: activeFilter === tab.key }]"
@@ -49,24 +14,50 @@
           <svg v-if="tab.key === 'time'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
-          <svg v-if="tab.key === 'category'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-          </svg>
           {{ tab.label }}{{ tab.key === 'price' && activeFilter === 'price' ? (priceOrder === 'asc' ? '↑' : '↓') : '' }}
         </button>
-      </div>
-      <transition name="slide-down">
-        <div v-if="showCategoryFilter" class="category-filter">
+
+        <div
+          class="category-tab-wrap"
+          @mouseenter="openCategoryDropdown()"
+          @mouseleave="scheduleCloseCategoryDropdown()"
+        >
           <button
-            v-for="cat in categories"
-            :key="cat.id || 'all'"
-            @click="selectCategory(cat.id)"
-            :class="['category-chip', { active: selectedCategoryId === cat.id }]"
+            class="filter-tab"
+            :class="{ active: activeFilter === 'category' }"
+            @click="onFilterClick('category')"
           >
-            {{ cat.name }}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            分类
+            <svg
+              :class="['caret-icon', { open: showCategoryDropdown }]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              width="12"
+              height="12"
+            >
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
           </button>
+
+          <transition name="dropdown">
+            <div v-if="showCategoryDropdown" class="category-dropdown">
+              <button
+                v-for="cat in categories"
+                :key="cat.id || 'all'"
+                @click="selectCategory(cat.id)"
+                :class="['category-chip', { active: selectedCategoryId === cat.id }]"
+              >
+                {{ cat.name }}
+              </button>
+            </div>
+          </transition>
         </div>
-      </transition>
+      </div>
     </section>
 
     <main class="products-main">
@@ -108,23 +99,10 @@
       </div>
 
       <div v-else-if="!loading && products.length === 0" class="empty-state">
-        <div class="empty-illustration">
-          <svg viewBox="0 0 160 160" width="160" height="160">
-            <rect x="30" y="40" width="100" height="80" rx="12" fill="var(--color-primary-50)" stroke="var(--color-primary-200)" stroke-width="2"/>
-            <circle cx="65" cy="70" r="10" fill="var(--color-primary-100)" stroke="var(--color-primary-300)" stroke-width="1.5"/>
-            <path d="M30 100 L65 75 L90 95 L110 80 L130 100" stroke="var(--color-primary-300)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="120" cy="50" r="18" fill="var(--color-primary-100)" stroke="var(--color-primary-300)" stroke-width="1.5"/>
-            <text x="120" y="55" text-anchor="middle" font-size="20" fill="var(--color-primary-400)">?</text>
-          </svg>
-        </div>
-        <p class="empty-title">暂无相关商品</p>
-        <p class="empty-text">换个关键词试试，或者浏览其他分类</p>
-        <button @click="resetFilters" class="reset-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-          </svg>
-          重置筛选
-        </button>
+        <el-empty description="暂无相关商品">
+          <p class="empty-text">换个关键词试试，或者浏览其他分类</p>
+          <el-button type="primary" round @click="resetFilters">重置筛选</el-button>
+        </el-empty>
       </div>
 
       <div v-else class="products-grid">
@@ -160,7 +138,6 @@ import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { productApi } from '../services/api'
 import ProductCard from '../components/ProductCard.vue'
-import { usePullRefresh } from '../use/usePullRefresh'
 
 const route = useRoute()
 
@@ -171,7 +148,6 @@ const hasMore = ref(true)
 const error = ref(null)
 
 const searchKeyword = ref('')
-const searchFocused = ref(false)
 const activeFilter = ref('default')
 const priceOrder = ref('asc') // 价格排序方向: asc/desc
 const selectedCategoryId = ref(null)
@@ -179,7 +155,8 @@ const selectedCategoryId = ref(null)
 const currentPage = ref(1)
 const pageSize = 20
 
-const showCategoryFilter = ref(false)
+const showCategoryDropdown = ref(false)
+let categoryCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const filterTabs = [
   { key: 'default', label: '综合' },
@@ -187,6 +164,9 @@ const filterTabs = [
   { key: 'time', label: '最新' },
   { key: 'category', label: '分类' }
 ]
+
+// 分类 Tab 单独渲染（需要包裹悬停下拉面板），其余 Tab 用 v-for 循环
+const otherFilterTabs = filterTabs.filter(t => t.key !== 'category')
 
 const categories = [
   { id: null, name: '全部' },
@@ -205,7 +185,6 @@ onMounted(async () => {
   if (route.query.categoryId) {
     selectedCategoryId.value = parseInt(String(route.query.categoryId || ''))
     activeFilter.value = 'category'
-    showCategoryFilter.value = true
   }
   await loadProducts()
   window.addEventListener('scroll', handleScroll)
@@ -213,16 +192,36 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  if (categoryCloseTimer) {
+    clearTimeout(categoryCloseTimer)
+    categoryCloseTimer = null
+  }
 })
 
 watch(activeFilter, (newVal) => {
-  showCategoryFilter.value = newVal === 'category'
-  if (newVal !== 'category') {
-    showCategoryFilter.value = false
-  }
   currentPage.value = 1
   loadProducts()
 })
+
+/* 分类下拉：鼠标进入分类按钮/下拉面板时打开 */
+function openCategoryDropdown() {
+  if (categoryCloseTimer) {
+    clearTimeout(categoryCloseTimer)
+    categoryCloseTimer = null
+  }
+  showCategoryDropdown.value = true
+}
+
+/* 分类下拉：鼠标移出时延迟关闭，给移动到面板留出时间 */
+function scheduleCloseCategoryDropdown() {
+  if (categoryCloseTimer) {
+    clearTimeout(categoryCloseTimer)
+  }
+  categoryCloseTimer = setTimeout(() => {
+    showCategoryDropdown.value = false
+    categoryCloseTimer = null
+  }, 150)
+}
 
 /* 点击筛选按钮：重复点击"价格"时切换升序/降序 */
 function onFilterClick(key) {
@@ -235,6 +234,12 @@ function onFilterClick(key) {
     activeFilter.value = key
     if (key === 'price') {
       priceOrder.value = 'asc'
+    }
+    // 分类按钮：键盘与触摸用户没有 hover，点击时直接把面板展开
+    if (key === 'category') {
+      openCategoryDropdown()
+    } else {
+      showCategoryDropdown.value = false
     }
   }
 }
@@ -295,27 +300,21 @@ async function loadProducts(isLoadMore = false) {
   }
 }
 
-// 下拉刷新：重新加载第一页数据
-const { isRefreshing, pullDistance, canTrigger } = usePullRefresh(async () => {
-  currentPage.value = 1
-  hasMore.value = true
-  await loadProducts()
-})
-
+// 下拉刷新已移除（H5 移动端特化）
 function retryLoad() {
-  currentPage.value = 1
-  loadProducts()
-}
-
-function handleSearch() {
   currentPage.value = 1
   loadProducts()
 }
 
 function selectCategory(categoryId) {
   selectedCategoryId.value = categoryId
-  currentPage.value = 1
-  loadProducts()
+  showCategoryDropdown.value = false
+  if (activeFilter.value !== 'category') {
+    activeFilter.value = 'category' // 触发 watch 重新加载并高亮分类 Tab
+  } else {
+    currentPage.value = 1
+    loadProducts()
+  }
 }
 
 function resetFilters() {
@@ -353,43 +352,6 @@ function handleScroll() {
   position: relative;
 }
 
-/* 下拉刷新指示器 */
-.pull-refresh-indicator {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 40px;
-  z-index: 5;
-}
-.pull-indicator-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-tertiary, #9ca3af);
-  font-size: 13px;
-}
-.pull-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--color-border-light, #e5e7eb);
-  border-top-color: var(--color-primary-500, #10b981);
-  border-radius: 50%;
-}
-.pull-spinner.spinning {
-  animation: pullRefreshSpin 0.8s linear infinite;
-}
-@keyframes pullRefreshSpin {
-  to { transform: rotate(360deg); }
-}
-
-.mobile-header {
-  display: none;
-}
-
 .filter-section {
   position: sticky;
   top: 0;
@@ -404,10 +366,11 @@ function handleScroll() {
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  overflow-x: auto;
+  overflow-x: visible;
   scrollbar-width: none;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
 }
 
 .filter-tabs::-webkit-scrollbar {
@@ -449,18 +412,36 @@ function handleScroll() {
   stroke: currentColor;
 }
 
-.category-filter {
-  padding: var(--space-3) var(--space-6) var(--space-4);
-  overflow-x: auto;
-  scrollbar-width: none;
-  display: flex;
-  gap: var(--space-2_5);
-  max-width: 1200px;
-  margin: 0 auto;
+.caret-icon {
+  transition: transform var(--duration-normal) var(--ease-out);
 }
 
-.category-filter::-webkit-scrollbar {
-  display: none;
+.caret-icon.open {
+  transform: rotate(180deg);
+}
+
+.category-tab-wrap {
+  position: relative;
+}
+
+.category-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2_5) var(--space-3);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  white-space: nowrap;
+  max-width: min(620px, calc(100vw - 32px));
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .category-chip {
@@ -638,52 +619,14 @@ function handleScroll() {
 }
 
 .empty-state {
-  text-align: center;
-  padding: var(--space-20) var(--space-8);
+  padding: var(--space-8) var(--space-4);
   animation: fadeIn var(--duration-slow) var(--ease-out) both;
-}
-
-.empty-illustration {
-  margin-bottom: var(--space-6);
-}
-
-.empty-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-2);
 }
 
 .empty-text {
   font-size: var(--text-sm);
   color: var(--color-text-tertiary);
-  margin: 0 0 var(--space-8);
-}
-
-.reset-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-8);
-  background: var(--gradient-primary);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  box-shadow: var(--shadow-green);
-  transition: all var(--duration-normal) var(--ease-out);
-  font-family: var(--font-sans);
-}
-
-.reset-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-green-lg);
-}
-
-.reset-btn:active {
-  transform: translateY(0) scale(0.97);
+  margin: 0 0 var(--space-4);
 }
 
 .load-more {
@@ -759,24 +702,21 @@ function handleScroll() {
   white-space: nowrap;
 }
 
-.slide-down-enter-active,
-.slide-down-leave-active {
+.dropdown-enter-active,
+.dropdown-leave-active {
   transition: all var(--duration-normal) var(--ease-out);
-  overflow: hidden;
 }
 
-.slide-down-enter-from,
-.slide-down-leave-to {
-  max-height: 0;
+.dropdown-enter-from,
+.dropdown-leave-to {
   opacity: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  transform: translateX(-50%) translateY(-6px);
 }
 
-.slide-down-enter-to,
-.slide-down-leave-from {
-  max-height: 80px;
+.dropdown-enter-to,
+.dropdown-leave-from {
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 @keyframes fadeIn {
@@ -808,120 +748,15 @@ function handleScroll() {
   .filter-tabs {
     padding: var(--space-3) var(--space-4);
   }
-
-  .category-filter {
-    padding: var(--space-3) var(--space-4) var(--space-3);
-  }
 }
 
 @media (max-width: 768px) {
-  .mobile-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2_5);
-    padding: var(--space-2_5) var(--space-3);
-    position: sticky;
-    top: 0;
-    z-index: var(--z-sticky);
-    background: var(--gradient-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(16, 185, 129, 0.08);
-  }
-
-  .back-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-primary);
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: background var(--duration-fast) var(--ease-out);
-  }
-
-  .back-btn svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .back-btn:active {
-    background: var(--color-gray-100);
-  }
-
-  .search-bar {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-full);
-    padding: var(--space-2) var(--space-4);
-    border: 1.5px solid transparent;
-    transition: all var(--duration-normal) var(--ease-out);
-  }
-
-  .search-bar.focused {
-    border-color: var(--color-primary-400);
-    background: var(--color-bg-primary);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  }
-
-  .search-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--color-text-tertiary);
-    flex-shrink: 0;
-    transition: color var(--duration-fast) var(--ease-out);
-  }
-
-  .search-bar.focused .search-icon {
-    color: var(--color-primary-500);
-  }
-
-  .search-input {
-    flex: 1;
-    border: none;
-    background: none;
-    font-size: var(--text-sm);
-    color: var(--color-text-primary);
-    outline: none;
-    font-family: var(--font-sans);
-  }
-
-  .search-input::placeholder {
-    color: var(--color-text-tertiary);
-  }
-
-  .clear-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: var(--color-gray-300);
-    border: none;
-    border-radius: 50%;
-    color: white;
-    cursor: pointer;
-    flex-shrink: 0;
-    padding: 0;
-    transition: background var(--duration-fast) var(--ease-out);
-  }
-
-  .clear-btn:active {
-    background: var(--color-gray-400);
-  }
-
   .filter-section {
     top: 0;
   }
 
   .filter-tabs {
+    overflow-x: auto;
     padding: var(--space-2_5) var(--space-3);
     gap: var(--space-1_5);
   }
@@ -929,16 +764,6 @@ function handleScroll() {
   .filter-tab {
     padding: var(--space-1_5) var(--space-4);
     font-size: var(--text-xs);
-  }
-
-  .category-filter {
-    padding: var(--space-2) var(--space-3) var(--space-3);
-    gap: var(--space-2);
-  }
-
-  .category-chip {
-    padding: var(--space-1) var(--space-3);
-    font-size: 11px;
   }
 
   .products-grid {
@@ -960,11 +785,10 @@ function handleScroll() {
   }
 
   .empty-state {
-    padding: var(--space-12) var(--space-6);
+    padding: var(--space-8) var(--space-4);
   }
 
-  .error-illustration svg,
-  .empty-illustration svg {
+  .error-illustration svg {
     width: 100px;
     height: 100px;
   }

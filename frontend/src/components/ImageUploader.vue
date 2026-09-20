@@ -49,23 +49,26 @@
         </button>
       </div>
 
-      <!-- 上传触发器 -->
-      <label v-if="imageList.length < maxCount" class="upload-trigger" :class="{ disabled: uploading }">
-        <input
-          type="file"
-          :accept="accept"
-          multiple
-          @change="handleFileSelect"
-          hidden
-          :disabled="uploading"
-        />
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#bbb" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21,15 16,10 5,21"/>
-        </svg>
-        <span class="upload-count">{{ imageList.length }}/{{ maxCount }}</span>
-      </label>
+      <!-- 上传触发器（el-upload 仅作为文件选择外壳，压缩/分片等业务逻辑不变） -->
+      <el-upload
+        v-if="imageList.length < maxCount"
+        class="upload-trigger-wrap"
+        :auto-upload="false"
+        :show-file-list="false"
+        multiple
+        :accept="accept"
+        :disabled="uploading"
+        :on-change="onFileChange"
+      >
+        <div class="upload-trigger" :class="{ disabled: uploading }">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#bbb" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21,15 16,10 5,21"/>
+          </svg>
+          <span class="upload-count">{{ imageList.length }}/{{ maxCount }}</span>
+        </div>
+      </el-upload>
     </div>
     <p class="upload-tip">支持 JPG/PNG/WEBP，单张不超过{{ maxSize }}MB，最多{{ maxCount }}张</p>
   </div>
@@ -195,10 +198,8 @@ async function compressImageBeforeUpload(file) {
   })
 }
 
-// 文件选择处理
-async function handleFileSelect(e: Event) {
-  const input = e.target as HTMLInputElement
-  const files = Array.from(input.files || [])
+// 文件选择处理（el-upload on-change 逐文件回调，抽成通用处理函数）
+async function processFiles(files: File[]) {
   const allowedTypes = props.accept.split(',')
   const maxSizeBytes = props.maxSize * 1024 * 1024
 
@@ -227,6 +228,9 @@ async function handleFileSelect(e: Event) {
 
     // 客户端压缩图片，大幅减少上传体积
     const compressedFile = await compressImageBeforeUpload(file)
+    // 压缩是异步的：多选时同批文件会并发通过上面的校验，
+    // 必须在 await 之后复查一次上限，否则会突破 maxCount
+    if (imageList.value.length >= props.maxCount) break
     const img = createImageItem(compressedFile)
     // 生成本地预览（用压缩后的文件生成 blob URL）
     img.preview = URL.createObjectURL(compressedFile)
@@ -236,8 +240,12 @@ async function handleFileSelect(e: Event) {
       uploadSingleImage(img, imageList.value.length - 1)
     }
   }
+}
 
-  input.value = ''
+function onFileChange(uploadFile) {
+  if (uploadFile.raw) {
+    processFiles([uploadFile.raw])
+  }
 }
 
 function createImageItem(file) {
@@ -517,4 +525,12 @@ defineExpose({
 .upload-trigger.disabled { opacity: 0.5; cursor: not-allowed; }
 .upload-count { font-size: 12px; color: #bbb; }
 .upload-tip { margin-top: 8px; font-size: 12px; color: #999; }
+</style>
+
+<style>
+/* el-upload 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.image-uploader .el-upload {
+  display: block;
+  width: 100%;
+}
 </style>

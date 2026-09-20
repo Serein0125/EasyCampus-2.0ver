@@ -31,16 +31,18 @@
     </div>
 
     <div v-if="hasSearched" class="filter-tabs">
-      <button
-        v-for="tab in filterTabs"
-        :key="tab.key"
-        class="filter-tab"
-        :class="{ active: activeType === tab.key }"
-        @click="switchType(tab.key)"
-      >
-        {{ tab.label }}
-        <span v-if="tab.count > 0" class="tab-count">{{ tab.count }}</span>
-      </button>
+      <el-tabs :model-value="activeType" @tab-change="switchType">
+        <el-tab-pane
+          v-for="tab in filterTabs"
+          :key="tab.key"
+          :name="tab.key"
+        >
+          <template #label>
+            {{ tab.label }}
+            <span v-if="tab.count > 0" class="tab-count">{{ tab.count }}</span>
+          </template>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <div v-if="hasSearched && !isEmpty && showSortBar" class="sort-bar">
@@ -69,7 +71,7 @@
       </div>
 
       <div v-else-if="!hasSearched" class="initial-state">
-        <div v-if="searchHistory.length > 0" class="history-section">
+        <el-card v-if="searchHistory.length > 0" class="history-section" shadow="never" :body-style="{ padding: '16px' }">
           <div class="section-label">
             <span class="section-label-text">搜索历史</span>
             <button class="clear-history-btn" @click="clearHistory">
@@ -90,9 +92,9 @@
               {{ item }}
             </button>
           </div>
-        </div>
+        </el-card>
 
-        <div class="hot-section">
+        <el-card class="hot-section" shadow="never" :body-style="{ padding: '16px' }">
           <div class="section-label">
             <span class="section-label-text">🔥 热门搜索</span>
           </div>
@@ -108,9 +110,9 @@
               {{ item }}
             </button>
           </div>
-        </div>
+        </el-card>
 
-        <div class="tag-section">
+        <el-card class="tag-section" shadow="never" :body-style="{ padding: '16px' }">
           <div class="section-label">
             <span class="section-label-text"># 热门标签</span>
           </div>
@@ -124,7 +126,7 @@
               {{ tag }}
             </button>
           </div>
-        </div>
+        </el-card>
 
         <div class="initial-hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
@@ -135,11 +137,9 @@
         </div>
       </div>
 
-      <div v-else-if="isEmpty" class="empty-state">
-        <div class="empty-icon">🔍</div>
-        <p class="empty-text">未找到与"{{ searchKeyword }}"相关的内容</p>
-        <p class="empty-subtext">试试其他关键词吧</p>
-      </div>
+      <el-empty v-else-if="isEmpty" :description="'未找到与“' + searchKeyword + '”相关的内容'">
+        <p class="empty-sub">试试其他关键词吧</p>
+      </el-empty>
 
       <template v-else>
         <section v-if="activeType === 'all' || activeType === 'user'" class="result-section">
@@ -149,21 +149,30 @@
             <button v-if="activeType === 'all' && result.userTotal > users.length" class="view-all-btn" @click="switchType('user')">查看全部</button>
           </div>
           <div class="user-list">
-            <div v-for="user in users" :key="'user-' + user.id" class="user-item" @click="goToUser(user.id)">
-              <img :src="user.avatar || defaultAvatar" class="user-avatar" loading="lazy" @error="onAvatarError" />
-              <div class="user-info">
-                <div class="user-name-row">
-                  <span class="user-nickname" v-html="highlightText(user.nickname || user.username, searchKeyword)"></span>
-                  <span v-if="user.matchedField === 'nickname'" class="match-badge">昵称匹配</span>
-                  <span v-else class="match-badge">用户名匹配</span>
+            <el-card
+              v-for="user in users"
+              :key="'user-' + user.id"
+              class="user-item"
+              shadow="hover"
+              :body-style="{ padding: '0px' }"
+              @click="goToUser(user.id)"
+            >
+              <div class="user-item-inner">
+                <img :src="user.avatar || defaultAvatar" class="user-avatar" loading="lazy" @error="onAvatarError" />
+                <div class="user-info">
+                  <div class="user-name-row">
+                    <span class="user-nickname" v-html="highlightText(user.nickname || user.username, searchKeyword)"></span>
+                    <span v-if="user.matchedField === 'nickname'" class="match-badge">昵称匹配</span>
+                    <span v-else class="match-badge">用户名匹配</span>
+                  </div>
+                  <div class="user-meta">
+                    <span v-if="user.school">{{ user.school }}</span>
+                    <span v-if="user.major">{{ user.major }}</span>
+                  </div>
+                  <p v-if="user.bio" class="user-bio" v-html="highlightText(user.bio, searchKeyword)"></p>
                 </div>
-                <div class="user-meta">
-                  <span v-if="user.school">{{ user.school }}</span>
-                  <span v-if="user.major">{{ user.major }}</span>
-                </div>
-                <p v-if="user.bio" class="user-bio" v-html="highlightText(user.bio, searchKeyword)"></p>
               </div>
-            </div>
+            </el-card>
           </div>
         </section>
 
@@ -610,55 +619,13 @@ function onAvatarError(e) {
 }
 
 .filter-tabs {
-  display: flex;
-  gap: 0;
   background: var(--color-bg-primary, #ffffff);
   border-bottom: 1px solid var(--color-border-light, #e5e7eb);
   padding: 0 var(--space-3, 0.75rem);
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
-.filter-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.filter-tab {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1, 0.25rem);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  font-size: var(--text-sm, 0.8125rem);
-  font-weight: var(--font-medium, 500);
-  color: var(--color-text-secondary, #4b5563);
-  border: none;
-  background: none;
-  cursor: pointer;
-  position: relative;
-  white-space: nowrap;
-  transition: color var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.filter-tab:hover {
-  color: var(--color-primary-600, #059669);
-}
-
-.filter-tab.active {
-  color: var(--color-primary-600, #059669);
-  font-weight: var(--font-bold, 700);
-}
-
-.filter-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background: var(--gradient-primary, linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%));
-  border-radius: var(--radius-full, 9999px);
+.filter-tabs :deep(.el-tabs__header) {
+  margin: 0;
 }
 
 .tab-count {
@@ -669,11 +636,6 @@ function onAvatarError(e) {
   color: var(--color-text-tertiary, #9ca3af);
   font-weight: var(--font-normal, 400);
   transition: all var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.filter-tab.active .tab-count {
-  background: var(--color-primary-50, #ecfdf5);
-  color: var(--color-primary-600, #059669);
 }
 
 .sort-bar {
@@ -781,15 +743,6 @@ function onAvatarError(e) {
   display: flex;
   flex-direction: column;
   gap: var(--space-6, 1.5rem);
-}
-
-.history-section,
-.hot-section,
-.tag-section {
-  background: var(--color-bg-primary, #ffffff);
-  border-radius: var(--radius-xl, 20px);
-  padding: var(--space-4, 1rem);
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(0,0,0,0.04));
 }
 
 .section-label {
@@ -948,28 +901,8 @@ function onAvatarError(e) {
   margin-top: var(--space-3, 0.75rem);
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-16, 4rem) var(--space-4, 1rem);
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 56px;
-  margin-bottom: var(--space-4, 1rem);
-  opacity: 0.6;
-}
-
-.empty-text {
-  font-size: var(--text-base, 0.9375rem);
-  color: var(--color-text-secondary, #4b5563);
-  margin-bottom: var(--space-2, 0.5rem);
-}
-
-.empty-subtext {
+.empty-sub {
+  margin: 0;
   font-size: var(--text-sm, 0.8125rem);
   color: var(--color-text-tertiary, #9ca3af);
 }
@@ -1020,25 +953,12 @@ function onAvatarError(e) {
   gap: var(--space-2, 0.5rem);
 }
 
-.user-item {
+.user-item-inner {
   display: flex;
   align-items: center;
   gap: var(--space-3, 0.75rem);
   padding: var(--space-3, 0.75rem);
-  background: var(--color-bg-primary, #ffffff);
-  border-radius: var(--radius-xl, 20px);
   cursor: pointer;
-  box-shadow: var(--shadow-card, 0 2px 8px rgba(0,0,0,0.04));
-  transition: all var(--duration-normal, 200ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.user-item:hover {
-  box-shadow: var(--shadow-card-hover, 0 12px 24px rgba(0,0,0,0.08));
-  transform: translateY(-2px);
-}
-
-.user-item:active {
-  transform: translateY(0) scale(0.99);
 }
 
 .user-item .user-avatar {

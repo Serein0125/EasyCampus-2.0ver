@@ -1,10 +1,17 @@
 <template>
   <div class="boards-discover-page">
-    <div class="header">
+    <header class="header">
       <span class="header-title">兴趣圈子</span>
+    </header>
+
+    <div v-if="loading" class="loading-state">
+      <el-skeleton v-for="i in 4" :key="i" animated :rows="3" class="board-skeleton" />
     </div>
-    <div class="board-grid" v-if="!loading">
-      <div v-for="board in boards" :key="board.id" class="board-card" @click="goToBoard(board.id)">
+
+    <el-empty v-else-if="boards.length === 0" description="暂无圈子，敬请期待" class="boards-empty" />
+
+    <div v-else class="board-grid">
+      <el-card v-for="board in boards" :key="board.id" class="board-card" shadow="hover" @click="goToBoard(board.id)">
         <div class="board-icon" :style="{ background: boardColors[board.id % boardColors.length] }">
           {{ board.name?.charAt(0) }}
         </div>
@@ -13,10 +20,7 @@
           <p>{{ board.description || '暂无简介' }}</p>
           <span class="member-count">{{ board.productCount || 0 }} 件商品</span>
         </div>
-      </div>
-    </div>
-    <div v-else class="loading">
-      <p>加载中...</p>
+      </el-card>
     </div>
   </div>
 </template>
@@ -52,18 +56,42 @@ function goToBoard(id) {
 .header { padding: 16px; background: #fff; border-bottom: 1px solid #f0f0f0; }
 .header-title { font-size: 18px; font-weight: 700; color: #333; }
 .board-grid { padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.board-card {
-  background: #fff; border-radius: 12px; padding: 16px; cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column;
-  align-items: center; text-align: center;
-}
 .board-icon {
   width: 48px; height: 48px; border-radius: 12px; display: flex;
   align-items: center; justify-content: center; color: #fff;
   font-size: 22px; font-weight: 700; margin-bottom: 10px;
 }
-.board-info h4 { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px; }
-.board-info p { font-size: 12px; color: #999; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.board-info h4 { font-size: 14px; font-weight: 600; color: #333; margin: 0 0 4px; }
+.board-info p { font-size: 12px; color: #999; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .member-count { font-size: 11px; color: var(--color-primary-500, #10b981); }
-.loading { padding: 60px 0; text-align: center; color: #999; }
+</style>
+
+<style>
+/* el-card 根节点由 EP 渲染，scoped 无法命中，用全局类兜底 */
+.boards-discover-page .board-card.el-card {
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.boards-discover-page .board-card.el-card .el-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px;
+}
+
+.boards-discover-page .board-card.el-card:hover {
+  transform: translateY(-2px);
+}
+
+.boards-discover-page .board-skeleton {
+  margin-bottom: 12px;
+  border-radius: 14px;
+}
+
+.boards-discover-page .boards-empty {
+  padding: 80px 0;
+}
 </style>

@@ -18,33 +18,33 @@
 
     <!-- KPI 统计卡 -->
     <section class="kpi-grid" v-if="stats">
-      <div class="kpi-card">
+      <el-card shadow="never" class="kpi-card">
         <span class="kpi-label">累计发布</span>
         <span class="kpi-value">{{ stats.summary.published }}</span>
         <span class="kpi-trend faint">在售 {{ stats.summary.onSale }}</span>
-      </div>
-      <div class="kpi-card">
+      </el-card>
+      <el-card shadow="never" class="kpi-card">
         <span class="kpi-label">已售出</span>
         <span class="kpi-value">{{ stats.summary.sold }}</span>
         <span class="kpi-trend faint">件商品</span>
-      </div>
-      <div class="kpi-card">
+      </el-card>
+      <el-card shadow="never" class="kpi-card">
         <span class="kpi-label">累计浏览</span>
         <span class="kpi-value">{{ stats.summary.totalViews }}</span>
         <span class="kpi-trend faint">获赞 {{ stats.summary.totalLikes }}</span>
-      </div>
-      <div class="kpi-card highlight">
+      </el-card>
+      <el-card shadow="never" class="kpi-card highlight">
         <span class="kpi-label">成交总额</span>
         <span class="kpi-value">¥{{ stats.summary.gmv }}</span>
         <span class="kpi-trend positive">二手好物持续流转</span>
-      </div>
+      </el-card>
     </section>
     <section class="kpi-grid" v-else>
-      <div v-for="i in 4" :key="i" class="kpi-card skeleton-card"></div>
+      <el-card v-for="i in 4" :key="i" shadow="never" class="kpi-card skeleton-card"></el-card>
     </section>
 
     <!-- 近30天趋势 -->
-    <section class="chart-card">
+    <el-card shadow="never" class="chart-card">
       <div class="chart-header">
         <h2 class="chart-title">近 30 天浏览 / 收藏趋势</h2>
         <span class="chart-hint">点击日期可看当日明细</span>
@@ -54,26 +54,26 @@
         收藏 <b>{{ selectedDay.likes }}</b> · 成交 <b>{{ selectedDay.sales }}</b> 件
       </div>
       <div ref="trendRef" class="chart-body"></div>
-    </section>
+    </el-card>
 
     <div class="chart-row">
       <!-- 类目分布 -->
-      <section class="chart-card">
+      <el-card shadow="never" class="chart-card">
         <div class="chart-header">
           <h2 class="chart-title">商品类目分布</h2>
           <span class="chart-hint">按商品数量</span>
         </div>
         <div ref="categoryRef" class="chart-body"></div>
-      </section>
+      </el-card>
 
       <!-- 浏览量 Top 商品 -->
-      <section class="chart-card">
+      <el-card shadow="never" class="chart-card">
         <div class="chart-header">
           <h2 class="chart-title">浏览量 Top 商品</h2>
           <span class="chart-hint">横向条形图</span>
         </div>
         <div ref="topRef" class="chart-body"></div>
-      </section>
+      </el-card>
     </div>
   </div>
 </template>
@@ -283,12 +283,15 @@ onUnmounted(() => {
 @media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
 
 .kpi-card {
-  display: flex; flex-direction: column; gap: var(--space-1);
-  padding: var(--space-4) var(--space-4);
-  background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
+}
+.kpi-card :deep(.el-card__body) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-4);
 }
 .kpi-card.highlight {
   background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
@@ -304,6 +307,7 @@ onUnmounted(() => {
 .kpi-trend.positive { color: rgba(255,255,255,0.85); }
 
 .skeleton-card { height: 96px; }
+.skeleton-card :deep(.el-card__body) { padding: 0; }
 
 .chart-row {
   display: grid;
@@ -313,13 +317,12 @@ onUnmounted(() => {
 @media (min-width: 720px) { .chart-row { grid-template-columns: 1fr 1fr; } }
 
 .chart-card {
-  background: var(--color-bg-primary);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  padding: var(--space-4);
   margin-bottom: var(--space-4);
 }
+.chart-card :deep(.el-card__body) { padding: var(--space-4); }
 .chart-row .chart-card { margin-bottom: 0; }
 
 .chart-header {

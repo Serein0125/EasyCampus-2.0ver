@@ -1,191 +1,183 @@
 <template>
   <div class="settings">
-    <NavBar />
-    
     <main class="main-content">
       <div class="container">
-        <div class="page-header">
-          <h1 class="page-title">设置</h1>
-          <p class="page-subtitle">管理您的账户偏好和安全设置</p>
-        </div>
-        
+        <header class="page-header">
+          <button class="back-btn" @click="$router.back()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+          </button>
+          <div class="header-text">
+            <h1 class="page-title">设置</h1>
+            <p class="page-subtitle">管理您的账户偏好和安全设置</p>
+          </div>
+        </header>
+
         <div class="settings-container">
           <!-- 账户安全 -->
-          <div class="settings-card">
-            <h3 class="card-title">
-              <span class="card-icon">🔒</span>
-              账户安全
-            </h3>
-            
+          <el-card shadow="never" class="settings-card">
+            <template #header>
+              <h3 class="card-title">
+                <span class="card-icon">🔒</span>
+                账户安全
+              </h3>
+            </template>
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>修改密码</h4>
                 <p>定期更改密码可以保护账户安全</p>
               </div>
-              <button @click="showPasswordModal = true" class="btn btn-outline">修改</button>
+              <el-button @click="showPasswordModal = true">修改</el-button>
             </div>
-            
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>两步验证</h4>
                 <p>为账户添加额外的安全层（开发中）</p>
               </div>
-              <button class="btn btn-outline" disabled>未启用</button>
+              <el-button disabled>未启用</el-button>
             </div>
-          </div>
+          </el-card>
 
           <!-- 个人资料 -->
-          <div class="settings-card">
-            <h3 class="card-title">
-              <span class="card-icon">🏫</span>
-              个人资料
-            </h3>
-
-          </div>
+          <el-card shadow="never" class="settings-card">
+            <template #header>
+              <h3 class="card-title">
+                <span class="card-icon">🏫</span>
+                个人资料
+              </h3>
+            </template>
+          </el-card>
 
           <!-- 通知设置 -->
-          <div class="settings-card">
-            <h3 class="card-title">
-              <span class="card-icon">🔔</span>
-              通知设置
-            </h3>
-            
+          <el-card shadow="never" class="settings-card">
+            <template #header>
+              <h3 class="card-title">
+                <span class="card-icon">🔔</span>
+                通知设置
+              </h3>
+            </template>
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>新消息通知</h4>
                 <p>当收到新消息时发送通知</p>
               </div>
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="notifications.newMessage" />
-                <span class="slider"></span>
-              </label>
+              <el-switch v-model="notifications.newMessage" />
             </div>
-            
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>订单状态更新</h4>
                 <p>订单状态变更时通知您</p>
               </div>
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="notifications.orderUpdate" checked />
-                <span class="slider"></span>
-              </label>
+              <el-switch v-model="notifications.orderUpdate" />
             </div>
-            
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>促销活动</h4>
                 <p>接收平台促销和活动信息</p>
               </div>
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="notifications.promotions" />
-                <span class="slider"></span>
-              </label>
+              <el-switch v-model="notifications.promotions" />
             </div>
-          </div>
-          
+          </el-card>
+
           <!-- 隐私设置 -->
-          <div class="settings-card">
-            <h3 class="card-title">
-              <span class="card-icon">🛡️</span>
-              隐私设置
-            </h3>
-            
+          <el-card shadow="never" class="settings-card">
+            <template #header>
+              <h3 class="card-title">
+                <span class="card-icon">🛡️</span>
+                隐私设置
+              </h3>
+            </template>
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>个人资料可见性</h4>
                 <p>控制其他用户能否查看您的资料</p>
               </div>
-              <select v-model="privacy.profileVisibility" class="form-select">
-                <option value="public">公开</option>
-                <option value="registered">仅注册用户</option>
-                <option value="private">私密</option>
-              </select>
+              <el-select v-model="privacy.profileVisibility" style="width: 160px">
+                <el-option value="public" label="公开" />
+                <el-option value="registered" label="仅注册用户" />
+                <el-option value="private" label="私密" />
+              </el-select>
             </div>
-            
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>在线状态显示</h4>
                 <p>让其他用户看到您是否在线</p>
               </div>
-              <label class="toggle-switch">
-                <input type="checkbox" v-model="privacy.showOnlineStatus" checked />
-                <span class="slider"></span>
-              </label>
+              <el-switch v-model="privacy.showOnlineStatus" />
             </div>
-          </div>
-          
+          </el-card>
+
           <!-- 危险区域 -->
-          <div class="settings-card danger-zone">
-            <h3 class="card-title danger-title">
-              <span class="card-icon">⚠️</span>
-              危险区域
-            </h3>
-            
+          <el-card shadow="never" class="settings-card danger-zone">
+            <template #header>
+              <h3 class="card-title danger-title">
+                <span class="card-icon">⚠️</span>
+                危险区域
+              </h3>
+            </template>
+
             <div class="setting-item">
               <div class="setting-info">
                 <h4>注销账户</h4>
                 <p>永久删除您的账户和所有数据，此操作不可撤销</p>
               </div>
-              <button @click="confirmDeleteAccount" class="btn btn-danger">注销账户</button>
+              <el-button type="danger" @click="confirmDeleteAccount">注销账户</el-button>
             </div>
-          </div>
-          
+          </el-card>
+
           <!-- 保存按钮 -->
           <div class="save-section">
-            <button @click="saveSettings" class="btn btn-primary btn-lg" :disabled="saving">
+            <el-button type="primary" size="large" :loading="saving" @click="saveSettings">
               {{ saving ? '保存中...' : '保存所有设置' }}
-            </button>
+            </el-button>
             <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
           </div>
         </div>
       </div>
     </main>
-    
+
     <!-- 修改密码弹窗 -->
-    <div v-if="showPasswordModal" class="modal-overlay" @click.self="showPasswordModal = false">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>修改密码</h3>
-          <button @click="showPasswordModal = false" class="close-btn">×</button>
-        </div>
-        
-        <form @submit.prevent="changePassword" class="modal-body">
-          <div class="form-group">
-            <label>当前密码</label>
-            <input type="password" v-model="passwordData.currentPassword" required />
-          </div>
-          
-          <div class="form-group">
-            <label>新密码</label>
-            <input type="password" v-model="passwordData.newPassword" required minlength="6" />
-          </div>
-          
-          <div class="form-group">
-            <label>确认新密码</label>
-            <input type="password" v-model="passwordData.confirmPassword" required />
-          </div>
-          
-          <div v-if="passwordError" class="alert alert-error">{{ passwordError }}</div>
-          <div v-if="passwordSuccess" class="alert alert-success">{{ passwordSuccess }}</div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="showPasswordModal = false" class="btn btn-outline">取消</button>
-            <button type="submit" class="btn btn-primary" :disabled="changingPassword">
-              {{ changingPassword ? '修改中...' : '确认修改' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <el-dialog v-model="showPasswordModal" title="修改密码" width="440px" append-to-body>
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordData"
+        :rules="passwordRules"
+        label-position="top"
+        @submit.prevent="changePassword"
+      >
+        <el-form-item label="当前密码" prop="currentPassword">
+          <el-input v-model="passwordData.currentPassword" type="password" show-password />
+        </el-form-item>
+
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="passwordData.newPassword" type="password" show-password />
+        </el-form-item>
+
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input v-model="passwordData.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="showPasswordModal = false">取消</el-button>
+        <el-button type="primary" :loading="changingPassword" @click="changePassword">
+          {{ changingPassword ? '修改中...' : '确认修改' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useToast } from '../use/useToast'
 import { userApi } from '../services/api'
-import NavBar from '../components/NavBar.vue'
 
 const toast = useToast()
 
@@ -208,13 +200,27 @@ const privacy = ref({
 // 密码修改
 const showPasswordModal = ref(false)
 const changingPassword = ref(false)
-const passwordError = ref('')
-const passwordSuccess = ref('')
-const passwordData = ref({
+const passwordFormRef = ref()
+const passwordData = reactive({
   currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
+
+const passwordRules = {
+  currentPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { validator: (_rule: unknown, value: string, callback: (e?: Error) => void) => {
+      if (value !== passwordData.newPassword) callback(new Error('两次输入的密码不一致'))
+      else callback()
+    }, trigger: 'blur' }
+  ]
+}
 
 function saveSettings() {
   saving.value = true
@@ -231,35 +237,26 @@ function saveSettings() {
 }
 
 async function changePassword() {
-  passwordError.value = ''
-  passwordSuccess.value = ''
-
-  if (passwordData.value.newPassword !== passwordData.value.confirmPassword) {
-    passwordError.value = '两次输入的密码不一致'
-    return
-  }
-
-  if (passwordData.value.newPassword.length < 6) {
-    passwordError.value = '密码长度至少6位'
-    return
-  }
+  const valid = await passwordFormRef.value?.validate().catch(() => false)
+  if (!valid) return
 
   changingPassword.value = true
 
   try {
     await userApi.changePassword({
-      oldPassword: passwordData.value.currentPassword,
-      newPassword: passwordData.value.newPassword
+      oldPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
     })
     toast.showToast('密码修改成功！', 'success')
 
     setTimeout(() => {
       showPasswordModal.value = false
-      passwordSuccess.value = ''
-      passwordData.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+      passwordData.currentPassword = ''
+      passwordData.newPassword = ''
+      passwordData.confirmPassword = ''
     }, 1500)
   } catch (error) {
-    passwordError.value = error.message || '密码修改失败，请稍后重试'
+    toast.showToast(error.message || '密码修改失败，请稍后重试', 'error')
   } finally {
     changingPassword.value = false
   }
@@ -290,12 +287,41 @@ async function confirmDeleteAccount() {
 }
 
 .page-header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 2rem;
 }
 
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  color: #333;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  border-color: var(--color-primary-400, #34d399);
+  color: var(--color-primary-600, #059669);
+}
+
+.back-btn svg { width: 22px; height: 22px; }
+
+.header-text {
+  flex: 1;
+}
+
 .page-title {
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: #333;
   margin-bottom: 0.5rem;
 }
@@ -312,9 +338,7 @@ async function confirmDeleteAccount() {
 }
 
 .settings-card {
-  background: white;
   border-radius: 12px;
-  padding: 2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -325,9 +349,7 @@ async function confirmDeleteAccount() {
 .card-title {
   font-size: 1.25rem;
   color: #333;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f0f0f0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -339,7 +361,6 @@ async function confirmDeleteAccount() {
 
 .danger-title {
   color: #dc3545;
-  border-bottom-color: #ffcdd2;
 }
 
 .setting-item {
@@ -366,114 +387,6 @@ async function confirmDeleteAccount() {
   margin: 0;
 }
 
-.btn {
-  padding: 0.6rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-outline {
-  background: white;
-  border: 1px solid #ddd;
-  color: #555;
-}
-
-.btn-outline:hover:not(:disabled) {
-  border-color: #4CAF50;
-  color: #4CAF50;
-}
-
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #45a049;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c82333;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-lg {
-  padding: 0.875rem 2.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.3s;
-  border-radius: 26px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #4CAF50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
-.form-select {
-  padding: 0.6rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  min-width: 140px;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: #4CAF50;
-}
-
 .save-section {
   text-align: center;
   padding: 2rem 0;
@@ -483,101 +396,5 @@ input:checked + .slider:before {
   margin-top: 1rem;
   color: #28a745;
   font-weight: 500;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #999;
-  line-height: 1;
-}
-
-.modal-body {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #555;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #4CAF50;
-}
-
-.alert {
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.alert-error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1rem;
 }
 </style>
